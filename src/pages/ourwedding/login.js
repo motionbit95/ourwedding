@@ -7,13 +7,21 @@ import {
   Grid,
   Input,
   Typography,
+  message,
 } from "antd";
-import React from "react";
+import { useForm } from "antd/es/form/Form";
+import React, { useEffect, useState } from "react";
 import { BsCaretRightFill } from "react-icons/bs";
+import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function Login(props) {
   const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
+  const [messageApi, contextHolder] = message.useMessage();
+  const navigation = useNavigate();
+  const location = useLocation();
+  const nextPage = location.state?.nextPage; // 'nextPage' 값에 접근
 
   const fontSize = screens.xs
     ? "18px"
@@ -34,6 +42,56 @@ function Login(props) {
     : screens.lg
     ? "120px"
     : "20px";
+
+  const onFinish = (values) => {
+    axios
+      .post("/auth/login", values)
+      .then((response) => {
+        messageApi.open({
+          type: "success",
+          content: response.data.message,
+        });
+
+        // 토큰 저장
+        localStorage.setItem("token", response.data.token);
+        // 로그인 성공
+        navigation(`/ourwedding/${nextPage}`);
+      })
+      .catch((error) => {
+        if (error.response.status === 400) {
+          if (error.response.data.code === -1001) {
+            // 정보가 없음 - 회원가입 후 이동
+            axios
+              .post("/auth/signup", values)
+              .then((response) => {
+                // messageApi.open({
+                //   type: "success",
+                //   content: response.data.message,
+                // });
+                onFinish(values);
+              })
+              .catch((error) => {
+                // 응답 오류 - 메세지 박스 표시
+                messageApi.open({
+                  type: "error",
+                  content: error.response.data.message,
+                });
+              });
+
+            return;
+          }
+          // 응답 오류 - 메세지 박스 표시
+          messageApi.open({
+            type: "error",
+            content: error.response.data.message,
+          });
+        }
+      });
+  };
+
+  const onFinishFailed = (errorInfo) => {
+    console.log("Failed:", errorInfo);
+  };
 
   return (
     <ConfigProvider
@@ -64,6 +122,8 @@ function Login(props) {
           url('https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&display=swap');
         </style>
 
+        {contextHolder}
+
         <Divider
           plain
           style={{
@@ -77,6 +137,8 @@ function Login(props) {
         </Divider>
 
         <Form
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
           requiredMark={false}
           variant={"filled"}
           labelCol={{ span: 8 }}
@@ -91,7 +153,9 @@ function Login(props) {
               colon={false}
               name={"user_name"}
               label={"접수자 성함"}
-              rules={[{ required: true }]}
+              rules={[
+                { required: true, message: "접수자 성함을 입력해주세요." },
+              ]}
             >
               <Input />
             </Form.Item>
@@ -99,12 +163,15 @@ function Login(props) {
               colon={false}
               name={"naver_id"}
               label={"네이버 아이디"}
-              rules={[{ required: true }]}
+              rules={[
+                { required: true, message: "네이버 아이디를 입력해주세요." },
+              ]}
             >
               <Input />
             </Form.Item>
 
             <Button
+              htmlType="submit"
               icon={<BsCaretRightFill />}
               iconPosition="end"
               type="primary"

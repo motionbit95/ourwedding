@@ -1,0 +1,13 @@
+openapi: "3.0.0"
+info:
+  title: "아워웨딩 - Firebase Functions API"
+  version: "1.0.0"
+  description: |
+    ## 🚀 Endpoint
+    배포가 완료되면 아래 주소에서 API를 확인할 수 있습니다.
+
+    - `https://example.cloudfunctions.net/api`
+      <br>  <br>
+    - `https://example.a.run.app`
+
+paths:

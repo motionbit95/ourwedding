@@ -2,9 +2,31 @@ import { Button, ConfigProvider, Flex } from "antd";
 import React from "react";
 import { FiLink } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Ourwedding(props) {
   const navigation = useNavigate();
+
+  const verifyToken = (token, page) => {
+    console.log(token);
+    axios
+      .post(
+        "/auth/verify-token",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      .then((response) => {
+        navigation(page);
+      })
+      .catch((error) => {
+        navigation("login", { state: { nextPage: page } });
+      });
+  };
+
   return (
     <ConfigProvider
       theme={{
@@ -33,11 +55,7 @@ function Ourwedding(props) {
               size="large"
               style={{ width: "100%", paddingInline: "40px" }}
               onClick={() => {
-                if (!localStorage.getItem("token")) {
-                  navigation("login");
-                } else {
-                  navigation("new");
-                }
+                verifyToken(localStorage.getItem("token"), "new");
               }}
             >
               신규신청
@@ -50,11 +68,7 @@ function Ourwedding(props) {
               size="large"
               style={{ width: "100%", paddingInline: "40px" }}
               onClick={() => {
-                if (!localStorage.getItem("token")) {
-                  navigation("login");
-                } else {
-                  navigation("revison");
-                }
+                verifyToken(localStorage.getItem("token"), "revison");
               }}
             >
               접수내역(재수정 신청)
