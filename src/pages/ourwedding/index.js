@@ -7,15 +7,14 @@ import axios from "axios";
 function Ourwedding(props) {
   const navigation = useNavigate();
 
-  const verifyToken = (token, page) => {
-    console.log(token);
+  const verifyToken = (page) => {
     axios
       .post(
         "/auth/verify-token",
         {},
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       )
@@ -48,14 +47,14 @@ function Ourwedding(props) {
           height: "100vh",
         }}
       >
-        <Flex gap={"large"} vertical>
+        <Flex gap={"large"}>
           <Flex gap={"small"}>
             <Button
               type="primary"
               size="large"
               style={{ width: "100%", paddingInline: "40px" }}
               onClick={() => {
-                verifyToken(localStorage.getItem("token"), "new");
+                verifyToken("new");
               }}
             >
               신규신청
@@ -68,7 +67,7 @@ function Ourwedding(props) {
               size="large"
               style={{ width: "100%", paddingInline: "40px" }}
               onClick={() => {
-                verifyToken(localStorage.getItem("token"), "revison");
+                verifyToken("revison");
               }}
             >
               접수내역(재수정 신청)

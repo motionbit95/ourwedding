@@ -102,7 +102,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const token = jwt.sign({ naver_id }, JWT_SECRET_KEY, {
+    const token = jwt.sign({ naver_id, user_name }, JWT_SECRET_KEY, {
       expiresIn: "1h",
     });
 
