@@ -10,7 +10,7 @@ function Ourwedding(props) {
   const verifyToken = (page) => {
     axios
       .post(
-        "/auth/verify-token",
+        "https://api-54hk753mxa-uc.a.run.app/auth/verify-token",
         {},
         {
           headers: {
@@ -47,7 +47,7 @@ function Ourwedding(props) {
           height: "100vh",
         }}
       >
-        <Flex gap={"large"}>
+        <Flex gap={"large"} vertical>
           <Flex gap={"small"}>
             <Button
               type="primary"

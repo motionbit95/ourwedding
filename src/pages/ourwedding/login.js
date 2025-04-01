@@ -45,7 +45,7 @@ function Login(props) {
 
   const onFinish = (values) => {
     axios
-      .post("/auth/login", values)
+      .post("https://api-54hk753mxa-uc.a.run.app/auth/login", values)
       .then((response) => {
         messageApi.open({
           type: "success",
@@ -62,7 +62,7 @@ function Login(props) {
           if (error.response.data.code === -1001) {
             // 정보가 없음 - 회원가입 후 이동
             axios
-              .post("/auth/signup", values)
+              .post("https://api-54hk753mxa-uc.a.run.app/auth/signup", values)
               .then((response) => {
                 // messageApi.open({
                 //   type: "success",

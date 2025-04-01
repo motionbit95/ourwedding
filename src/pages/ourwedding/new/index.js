@@ -31,7 +31,7 @@ function NewRequest(props) {
   useEffect(() => {
     axios
       .post(
-        "/auth/verify-token",
+        "https://api-54hk753mxa-uc.a.run.app/auth/verify-token",
         {},
         {
           headers: {
