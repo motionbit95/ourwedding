@@ -1,7 +1,6 @@
 import {
   Button,
   Checkbox,
-  Col,
   ConfigProvider,
   Divider,
   Flex,
@@ -9,104 +8,142 @@ import {
   Grid,
   Input,
   Modal,
-  Row,
   Select,
   Space,
   Typography,
 } from "antd";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { MdAttachFile } from "react-icons/md";
 import { FiFilePlus } from "react-icons/fi";
 import { BsCaretRightFill } from "react-icons/bs";
 
-function NewRequest(props) {
+// Constants
+const GRADES = [
+  ["S 샘플", "4일이내"],
+  ["1 씨앗", "7일이내"],
+  ["2 새싹", "4일이내"],
+  ["3 나무", "2일이내"],
+  ["# 숲", "3시간이내"],
+];
+
+const ADDITIONAL_OPTIONS = [
+  ["film", "필름 추가", 1500],
+  ["person", "인원 추가", 2000],
+  ["edit", "합성", 2000],
+];
+
+const CAUTION_ITEMS = [
+  {
+    text: "업로드 후에는 요청사항/파일은 변동 불가능합니다. 그러므로 신중히 업로드 부탁드립니다.",
+  },
+  {
+    text: (
+      <>
+        요청사항 중 불가능한 사항에 대해서는 작업 중 따로 연락 드리지 않습니다.
+        {"\n"}
+        <span style={{ fontWeight: "bold", color: "rgba(147, 67, 67, 1)" }}>
+          그러므로 요청사항 중 애매한 부분에 대해서는 업로드 전 미리 사진과 함께
+          채팅으로 가능 여부 확인 부탁드립니다.
+        </span>
+      </>
+    ),
+  },
+  {
+    text: (
+      <>
+        1차 보정본과 최근 재수정(모든 재수정 파일 X) 주신 파일은 요청일로부터
+        한달 간 [접수 내역]에서 확인이 가능하나, 그 이후엔 파기되며 완성본에
+        대해서 책임지지 않습니다. {"\n"}
+        <span style={{ fontWeight: "bold", color: "rgba(147, 67, 67, 1)" }}>
+          그러므로 모든 재수정과 작업본은 개인적으로 꼭 저장해주시길 바랍니다.
+        </span>
+      </>
+    ),
+  },
+  {
+    text: "샘플 진행 시 사진은 자사 작업물로 귀속되어 마케팅 채널에 활용될 수 있습니다. ( 모자이크 X )",
+  },
+];
+
+function NewRequest() {
   const navigation = useNavigate();
   const [user, setUser] = useState();
   const { useBreakpoint } = Grid;
-
   const screens = useBreakpoint();
   const [selectedValue, setSelectedValue] = useState([]);
-  const formattedDate = new Date()
-    .toLocaleDateString("ko-KR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
-    .replace(/. /g, " / ")
-    .replace(".", "");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    axios
-      .post(
-        "https://api-54hk753mxa-uc.a.run.app/auth/verify-token",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      )
-      .then((response) => {
-        console.log(response.data.user);
-        setUser(response.data.user);
+  // Memoized values
+  const formattedDate = useMemo(() => {
+    return new Date()
+      .toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       })
-      .catch((error) => {
-        navigation("/ourwedding/login", { state: { nextPage: "new" } });
-      });
+      .replace(/. /g, " / ")
+      .replace(".", "");
   }, []);
 
-  const handleChange = (checkedValues) => {
-    if (selectedValue.includes(checkedValues)) {
-      setSelectedValue(
-        selectedValue.filter((value) => value !== checkedValues)
-      );
-    } else {
-      setSelectedValue([...selectedValue, checkedValues]);
-    }
-  };
+  const fontSize = useMemo(() => {
+    if (screens.xs) return "28px";
+    if (screens.sm) return "32px";
+    if (screens.md) return "48px";
+    if (screens.lg) return "64px";
+    return "20px";
+  }, [screens]);
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const showModal = () => {
-    setIsModalOpen(true);
-  };
-  const handleOk = () => {
-    setIsModalOpen(false);
-  };
-  const handleCancel = () => {
-    setIsModalOpen(false);
-  };
+  const paddingBlock = useMemo(() => {
+    if (screens.xs) return "60px";
+    if (screens.sm) return "80px";
+    if (screens.md) return "100px";
+    if (screens.lg) return "120px";
+    return "20px";
+  }, [screens]);
 
-  const fontSize = screens.xs
-    ? "28px"
-    : screens.sm
-    ? "32px"
-    : screens.md
-    ? "48px"
-    : screens.lg
-    ? "64px"
-    : "20px";
+  const paddingBox = useMemo(() => {
+    if (screens.xs) return "24px";
+    if (screens.sm) return "32px";
+    if (screens.md) return "40px";
+    if (screens.lg) return "48px";
+    return "20px";
+  }, [screens]);
 
-  const paddingBlock = screens.xs
-    ? "60px"
-    : screens.sm
-    ? "80px"
-    : screens.md
-    ? "100px"
-    : screens.lg
-    ? "120px"
-    : "20px";
+  // Handlers
+  const handleChange = useCallback((checkedValues) => {
+    setSelectedValue((prev) =>
+      prev.includes(checkedValues)
+        ? prev.filter((value) => value !== checkedValues)
+        : [...prev, checkedValues]
+    );
+  }, []);
 
-  const paddingBox = screens.xs
-    ? "24px"
-    : screens.sm
-    ? "32px"
-    : screens.md
-    ? "40px"
-    : screens.lg
-    ? "48px"
-    : "20px"; // 기본값
+  const showModal = useCallback(() => setIsModalOpen(true), []);
+  const handleOk = useCallback(() => setIsModalOpen(false), []);
+  const handleCancel = useCallback(() => setIsModalOpen(false), []);
+
+  // Effects
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        const response = await axios.post(
+          "https://api-54hk753mxa-uc.a.run.app/auth/verify-token",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setUser(response.data.user);
+      } catch (error) {
+        navigation("/ourwedding/login", { state: { nextPage: "new" } });
+      }
+    };
+    verifyToken();
+  }, [navigation]);
 
   return (
     <ConfigProvider
@@ -161,7 +198,7 @@ function NewRequest(props) {
           wrapperCol={{ span: 16 }}
           style={{ paddingBlock, paddingInline: "20px" }}
         >
-          <Flex gap={screens.lg ? "large" : "meddle"} vertical>
+          <Flex gap={screens.lg ? "large" : "middle"} vertical>
             <Form.Item
               label={<strong>{"(자동) 주문자 성함 / 아이디"}</strong>}
               colon={false}
@@ -176,7 +213,7 @@ function NewRequest(props) {
               label={<strong>{"(자동) 접수 날짜"}</strong>}
               colon={false}
             >
-              <Input variant="underlined" readOnly value={`${formattedDate}`} />
+              <Input variant="underlined" readOnly value={formattedDate} />
             </Form.Item>
             <Form.Item
               label={<strong>{"상품주문번호"}</strong>}
@@ -188,11 +225,11 @@ function NewRequest(props) {
 
             <Form.Item label={<strong>{"보정등급"}</strong>} colon={false}>
               <Select placeholder={"보정등급을 선택해주세요."}>
-                <Select.Option>S 샘플 (4일이내)</Select.Option>
-                <Select.Option>1 씨앗 (7일이내)</Select.Option>
-                <Select.Option>2 새싹 (4일이내)</Select.Option>
-                <Select.Option>3 나무 (2일이내)</Select.Option>
-                <Select.Option># 숲 (3시간이내)</Select.Option>
+                {GRADES.map(([grade, time]) => (
+                  <Select.Option
+                    key={grade}
+                  >{`${grade} (${time})`}</Select.Option>
+                ))}
               </Select>
             </Form.Item>
 
@@ -209,30 +246,18 @@ function NewRequest(props) {
             >
               <div className="checkbox-group">
                 <Checkbox.Group onChange={handleChange} defaultValue={[]}>
-                  <div className="checkbox-item">
-                    <Checkbox value="film">
-                      <span className="checkbox-label">
-                        <span className="checkbox-title">필름 추가</span>
-                        <span className="checkbox-price">+1,500원</span>
-                      </span>
-                    </Checkbox>
-                  </div>
-                  <div className="checkbox-item">
-                    <Checkbox value="person">
-                      <span className="checkbox-label">
-                        <span className="checkbox-title">인원 추가</span>
-                        <span className="checkbox-price">+2,000원</span>
-                      </span>
-                    </Checkbox>
-                  </div>
-                  <div className="checkbox-item">
-                    <Checkbox value="edit">
-                      <span className="checkbox-label">
-                        <span className="checkbox-title">합성</span>
-                        <span className="checkbox-price">+2,000원</span>
-                      </span>
-                    </Checkbox>
-                  </div>
+                  {ADDITIONAL_OPTIONS.map(([value, title, price]) => (
+                    <div key={value} className="checkbox-item">
+                      <Checkbox value={value}>
+                        <span className="checkbox-label">
+                          <span className="checkbox-title">{title}</span>
+                          <span className="checkbox-price">
+                            +{price.toLocaleString()}원
+                          </span>
+                        </span>
+                      </Checkbox>
+                    </div>
+                  ))}
                 </Checkbox.Group>
               </div>
             </Form.Item>
@@ -272,6 +297,7 @@ function NewRequest(props) {
               </Typography.Title>
               <MdAttachFile size={18} />
             </Space>
+
             <div
               style={{
                 padding: paddingBox,
@@ -284,18 +310,23 @@ function NewRequest(props) {
                     {`파일 업로드는 raw / jpeg / jpg / cr2 / cr3 / heic만 가능합니다.
                      ㄴ 그 이외에 파일은 해당 사이트에서 파일 변환하여 업로드바랍니다. `}
                     <Typography.Link
-                      style={{ color: "rgba(204, 87, 58, 1)", fontWeight: 700 }}
+                      style={{
+                        color: "rgba(204, 87, 58, 1)",
+                        fontWeight: 700,
+                      }}
                       onClick={() => window.open("https://convertio.co/kr/")}
                     >
                       Convertio — 파일 변환기
                     </Typography.Link>
                     {" : 파일전환 페이지"}
                   </li>
+
                   <li style={{ whiteSpace: "pre-line" }}>
                     {
                       "사진은 업로드 후 변경이 불가능하니 신중하게 업로드 부탁 드립니다."
                     }
                   </li>
+
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`파일용량은 꼭 확인 후 가장 큰 파일로 업로드 부탁 드립니다.
                      ㄴ 작업 이후 파일 크기로 인한 재작업은 재주문 후 진행해야 합니다.`}
@@ -303,9 +334,13 @@ function NewRequest(props) {
                 </Flex>
               </Typography.Paragraph>
             </div>
+
             <Space
               size={"large"}
-              style={{ justifyContent: "flex-end", marginBottom: "24px" }}
+              style={{
+                justifyContent: "flex-end",
+                marginBottom: "24px",
+              }}
             >
               <Typography.Text
                 style={{
@@ -316,6 +351,7 @@ function NewRequest(props) {
               >
                 업로드 된 사진 파일 갯수 : 0장
               </Typography.Text>
+
               <Button
                 type="primary"
                 icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
@@ -331,6 +367,7 @@ function NewRequest(props) {
               </Typography.Title>
               <MdAttachFile size={18} />
             </Space>
+
             <div
               style={{
                 padding: paddingBox,
@@ -341,7 +378,7 @@ function NewRequest(props) {
                 <Flex vertical gap={"large"}>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`해당창은 참고사진을 업로드 하는 창으로 원하시는 작업 방향을 참고 할 수 있는 사진 업로드 부탁드립니다.
-                        ex) 셀카 or 스튜디오 보정본`}
+ex) 셀카 or 스튜디오 보정본`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`참고사진은 1장만 업로드 가능하여 최대한 [ 얼굴과 몸이 잘보이는 정면인 사진 ]  으로 업로드 바랍니다.`}
@@ -349,19 +386,14 @@ function NewRequest(props) {
                 </Flex>
               </Typography.Paragraph>
             </div>
+
             <Space
               size={"large"}
-              style={{ justifyContent: "flex-end", marginBottom: "24px" }}
+              style={{
+                justifyContent: "flex-end",
+                marginBottom: "24px",
+              }}
             >
-              {/* <Typography.Text
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  color: "rgba(79, 52, 21, 1)",
-                }}
-              >
-                업로드 된 사진 파일 갯수 : 0장
-              </Typography.Text> */}
               <Button
                 type="primary"
                 icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
@@ -483,8 +515,8 @@ function NewRequest(props) {
       <Divider
         plain
         style={{
-          color: "transparent", // 내부 색상을 투명하게 설정
-          WebkitTextStroke: "0.6px #A79166", // 외곽선 두께 및 색상 지정
+          color: "transparent",
+          WebkitTextStroke: "0.6px #A79166",
           fontFamily: "Rufina",
           fontWeight: 400,
           fontSize,
@@ -506,8 +538,8 @@ function NewRequest(props) {
           style={{
             width: "100%",
             maxWidth: "900px",
-            color: "transparent", // 내부 색상을 투명하게 설정
-            WebkitTextStroke: "0.6px #A79166", // 외곽선 두께 및 색상 지정
+            color: "transparent",
+            WebkitTextStroke: "0.6px #A79166",
             fontFamily: "Rufina",
             fontWeight: 400,
             fontSize: parseInt(fontSize.replace("px")) * 1.3,
@@ -540,59 +572,17 @@ function NewRequest(props) {
             <Checkbox.Group
               style={{
                 display: "grid",
-                gap: "16px", // 체크박스 항목 간 간격 조정
+                gap: "16px",
               }}
             >
-              {[
-                {
-                  text: "업로드 후에는 요청사항/파일은 변동 불가능합니다. 그러므로 신중히 업로드 부탁드립니다.",
-                },
-                {
-                  text: (
-                    <>
-                      요청사항 중 불가능한 사항에 대해서는 작업 중 따로 연락
-                      드리지 않습니다.{"\n"}
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          color: "rgba(147, 67, 67, 1)",
-                        }}
-                      >
-                        그러므로 요청사항 중 애매한 부분에 대해서는 업로드 전
-                        미리 사진과 함께 채팅으로 가능 여부 확인 부탁드립니다.
-                      </span>
-                    </>
-                  ),
-                },
-                {
-                  text: (
-                    <>
-                      1차 보정본과 최근 재수정(모든 재수정 파일 X) 주신 파일은
-                      요청일로부터 한달 간 [접수 내역]에서 확인이 가능하나, 그
-                      이후엔 파기되며 완성본에 대해서 책임지지 않습니다. {"\n"}
-                      <span
-                        style={{
-                          fontWeight: "bold",
-                          color: "rgba(147, 67, 67, 1)",
-                        }}
-                      >
-                        그러므로 모든 재수정과 작업본은 개인적으로 꼭
-                        저장해주시길 바랍니다.
-                      </span>
-                    </>
-                  ),
-                },
-                {
-                  text: "샘플 진행 시 사진은 자사 작업물로 귀속되어 마케팅 채널에 활용될 수 있습니다. ( 모자이크 X )",
-                },
-              ].map((item, index) => (
+              {CAUTION_ITEMS.map((item, index) => (
                 <div
                   key={index}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 40px", // 텍스트와 체크박스 간 간격 설정
-                    alignItems: "center", // 수직 정렬
-                    columnGap: "36px", // 텍스트와 체크박스 사이 간격 추가
+                    gridTemplateColumns: "1fr 40px",
+                    alignItems: "center",
+                    columnGap: "36px",
                     whiteSpace: "pre-line",
                   }}
                 >
