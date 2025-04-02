@@ -11,6 +11,8 @@ import {
   Select,
   Space,
   Typography,
+  Upload,
+  message,
 } from "antd";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
@@ -75,6 +77,58 @@ function NewRequest() {
   const [selectedValue, setSelectedValue] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [photoList, setPhotoList] = useState([]); // 사진 리스트
+  const [referenceFileList, setReferenceFileList] = useState([]); // 레퍼런스 파일 리스트
+
+  const customUpload = ({ file, onSuccess }) => {
+    onSuccess("ok"); // 강제로 성공 처리
+  };
+
+  const handlePhotoUpload = useCallback(({ file, fileList }) => {
+    if (file.status === "done") {
+      showMessage(
+        "success",
+        `${file.name} 사진이 성공적으로 업로드되었습니다.`
+      );
+    } else if (file.status === "error") {
+      showMessage("error", `${file.name} 사진 업로드에 실패했습니다.`);
+    }
+    setPhotoList(fileList);
+  }, []);
+
+  const handleReferenceUpload = useCallback(({ file, fileList }) => {
+    if (file.status === "done") {
+      showMessage("success", `${file.name} 참고 사진 파일이 업로드되었습니다.`);
+    } else if (file.status === "error") {
+      showMessage(
+        "error",
+        `${file.name} 참고 사진 파일 업로드에 실패했습니다.`
+      );
+    }
+    setReferenceFileList(fileList);
+  }, []);
+
+  const [checkedItems, setCheckedItems] = useState([false, false, false]);
+
+  const [messageApi, contextHolder] = message.useMessage();
+  const showMessage = useCallback(
+    (type, content) => {
+      messageApi.open({
+        type,
+        content,
+      });
+    },
+    [messageApi]
+  );
+
+  const handleCheck = useCallback((index) => {
+    setCheckedItems((prev) => {
+      const newCheckedItems = [...prev];
+      newCheckedItems[index] = !newCheckedItems[index];
+      return newCheckedItems;
+    });
+  }, []);
+
   // Memoized values
   const formattedDate = useMemo(() => {
     return new Date()
@@ -83,7 +137,7 @@ function NewRequest() {
         month: "2-digit",
         day: "2-digit",
       })
-      .replace(/. /g, " / ")
+      .replace(/. /g, "-")
       .replace(".", "");
   }, []);
 
@@ -124,6 +178,66 @@ function NewRequest() {
   const handleOk = useCallback(() => setIsModalOpen(false), []);
   const handleCancel = useCallback(() => setIsModalOpen(false), []);
 
+  const [formData, setFormData] = useState({
+    userName: user?.user_name || "",
+    userId: user?.naver_id || "",
+    receivedDate: formattedDate || "",
+    orderNumber: "",
+    grade: "",
+    photoCount: "",
+    additionalOptions: [],
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (value) => {
+    setFormData((prev) => ({ ...prev, grade: value }));
+  };
+
+  const handleCheckboxChange = (checkedValues) => {
+    setFormData((prev) => ({ ...prev, additionalOptions: checkedValues }));
+  };
+
+  const handleFormUpload = () => {
+    console.log("upload");
+    console.log(formData);
+
+    // 사용 예시
+    uploadFiles(photoList);
+
+    // console.log(JSON.stringify(photoList));
+    // console.log(JSON.stringify(referenceFileList));
+  };
+
+  const uploadFiles = async (fileList) => {
+    try {
+      const uploadPromises = fileList.map(async (file) => {
+        const formData = new FormData();
+        formData.append("file", file.originFileObj); // 실제 파일 추가
+
+        const response = await fetch("http://localhost:8080/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`서버 응답 실패: ${response.status}`);
+        }
+
+        return response.json();
+      });
+
+      // 모든 파일 업로드 실행
+      const results = await Promise.all(uploadPromises);
+      console.log("📤 모든 파일 업로드 성공:", results);
+    } catch (error) {
+      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
+    }
+  };
+
   // Effects
   useEffect(() => {
     const verifyToken = async () => {
@@ -144,6 +258,17 @@ function NewRequest() {
     };
     verifyToken();
   }, [navigation]);
+
+  // 유저 정보가 들어오면 formData 업데이트
+  useEffect(() => {
+    if (user) {
+      setFormData((prev) => ({
+        ...prev,
+        userName: user.user_name || "",
+        userId: user.naver_id || "",
+      }));
+    }
+  }, [user]);
 
   return (
     <ConfigProvider
@@ -167,9 +292,14 @@ function NewRequest() {
             colorTextLightSolid: "rgba(79, 52, 21, 1)",
             colorPrimaryActive: "#ADA69E",
           },
+          Upload: {
+            colorPrimary: "rgba(201, 210, 185, 1)",
+            colorPrimaryHover: "rgba(180, 190, 170, 1)",
+          },
         },
       }}
     >
+      {contextHolder}
       <Flex vertical style={{ alignItems: "center", justifyContent: "center" }}>
         <Flex
           vertical
@@ -206,29 +336,44 @@ function NewRequest() {
               <Input
                 variant="underlined"
                 readOnly
-                value={`${user?.user_name} / ${user?.naver_id}`}
+                value={`${formData.userName} / ${formData.userId}`}
               />
             </Form.Item>
+
             <Form.Item
               label={<strong>{"(자동) 접수 날짜"}</strong>}
               colon={false}
             >
-              <Input variant="underlined" readOnly value={formattedDate} />
+              <Input
+                variant="underlined"
+                readOnly
+                value={formData.receivedDate}
+              />
             </Form.Item>
+
             <Form.Item
               label={<strong>{"상품주문번호"}</strong>}
               colon={false}
               help={"ㄴ * 오타없이 꼭 정확한 상품 주문번호 기재 바랍니다. *"}
             >
-              <Input variant="underlined" />
+              <Input
+                name="orderNumber"
+                variant="underlined"
+                value={formData.orderNumber}
+                onChange={handleInputChange}
+              />
             </Form.Item>
 
             <Form.Item label={<strong>{"보정등급"}</strong>} colon={false}>
-              <Select placeholder={"보정등급을 선택해주세요."}>
+              <Select
+                placeholder={"보정등급을 선택해주세요."}
+                value={formData.grade}
+                onChange={handleSelectChange}
+              >
                 {GRADES.map(([grade, time]) => (
-                  <Select.Option
-                    key={grade}
-                  >{`${grade} (${time})`}</Select.Option>
+                  <Select.Option key={grade} value={grade}>
+                    {`${grade} (${time})`}
+                  </Select.Option>
                 ))}
               </Select>
             </Form.Item>
@@ -236,16 +381,23 @@ function NewRequest() {
             <Form.Item label={<strong>{"사진 장수"}</strong>} colon={false}>
               <Input
                 type="number"
+                name="photoCount"
                 variant="underlined"
                 placeholder="5+1 서비스 장수 포함하여 기재 바랍니다"
+                value={formData.photoCount}
+                onChange={handleInputChange}
               />
             </Form.Item>
+
             <Form.Item
               label={<strong>{"추가 결제 여부"}</strong>}
               colon={false}
             >
               <div className="checkbox-group">
-                <Checkbox.Group onChange={handleChange} defaultValue={[]}>
+                <Checkbox.Group
+                  onChange={handleCheckboxChange}
+                  value={formData.additionalOptions}
+                >
                   {ADDITIONAL_OPTIONS.map(([value, title, price]) => (
                     <div key={value} className="checkbox-item">
                       <Checkbox value={value}>
@@ -349,15 +501,39 @@ function NewRequest() {
                   color: "rgba(79, 52, 21, 1)",
                 }}
               >
-                업로드 된 사진 파일 갯수 : 0장
+                업로드 된 사진 파일 갯수 : {photoList.length}장
               </Typography.Text>
 
-              <Button
-                type="primary"
-                icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
+              <Upload
+                accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
+                multiple
+                onChange={handlePhotoUpload}
+                fileList={photoList}
+                showUploadList={false}
+                customRequest={customUpload}
+                beforeUpload={(file) => {
+                  const isValidType = [
+                    ".raw",
+                    ".jpeg",
+                    ".jpg",
+                    ".cr2",
+                    ".cr3",
+                    ".heic",
+                  ].some((ext) => file.name.toLowerCase().endsWith(ext));
+                  if (!isValidType) {
+                    showMessage("error", "지원하지 않는 파일 형식입니다");
+                    return Upload.LIST_IGNORE;
+                  }
+                  return true;
+                }}
               >
-                사진 업로드
-              </Button>
+                <Button
+                  type="primary"
+                  icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
+                >
+                  사진 업로드
+                </Button>
+              </Upload>
             </Space>
           </Flex>
           <Flex vertical gap={"middle"}>
@@ -394,12 +570,35 @@ ex) 셀카 or 스튜디오 보정본`}
                 marginBottom: "24px",
               }}
             >
-              <Button
-                type="primary"
-                icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
+              <Upload
+                accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
+                maxCount={1}
+                showUploadList={false}
+                onChange={handleReferenceUpload}
+                customRequest={customUpload}
+                beforeUpload={(file) => {
+                  const isValidType = [
+                    ".raw",
+                    ".jpeg",
+                    ".jpg",
+                    ".cr2",
+                    ".cr3",
+                    ".heic",
+                  ].some((ext) => file.name.toLowerCase().endsWith(ext));
+                  if (!isValidType) {
+                    showMessage("error", "지원하지 않는 파일 형식입니다");
+                    return Upload.LIST_IGNORE;
+                  }
+                  return true;
+                }}
               >
-                사진 업로드
-              </Button>
+                <Button
+                  type="primary"
+                  icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
+                >
+                  사진 업로드
+                </Button>
+              </Upload>
             </Space>
           </Flex>
 
@@ -424,7 +623,29 @@ ex) 셀카 or 스튜디오 보정본`}
               <Modal
                 title="요청사항 복사하기"
                 open={isModalOpen}
-                onOk={handleOk}
+                onOk={() => {
+                  const text = `1. 보정강도 (약,약중,중,중강,강)
+(추천 : 자연스러운 보정을 위해 생각하시는 보정단계보다 한단계 낮춰서 진행 하시는걸 추천드립니다 ! )
+
+▶️
+
+2. 전체 사진 공통 요청사항 
+
+신랑 :
+신부 : 
+
+3. 개별 추가 요청사항
+(밝기 조절은 기재 해주시면 가능합니다.) (색감작업은 아워웨딩 유료 필름 결제 해주셔야 합니다.)
+
+▶️ 파일명 - 요청사항 :`;
+                  navigator.clipboard.writeText(text);
+                  showMessage(
+                    "success",
+                    "요청사항이 클립보드에 복사되었습니다."
+                  );
+
+                  handleOk();
+                }}
                 onCancel={handleCancel}
                 centered
                 width={{
@@ -569,28 +790,26 @@ ex) 셀카 or 스튜디오 보정본`}
             }}
             gap={"24px"}
           >
-            <Checkbox.Group
-              style={{
-                display: "grid",
-                gap: "16px",
-              }}
-            >
-              {CAUTION_ITEMS.map((item, index) => (
-                <div
-                  key={index}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 40px",
-                    alignItems: "center",
-                    columnGap: "36px",
-                    whiteSpace: "pre-line",
-                  }}
-                >
-                  <span>• {item.text}</span>
-                  <Checkbox />
-                </div>
-              ))}
-            </Checkbox.Group>
+            {CAUTION_ITEMS.map((item, index) => (
+              <div
+                key={index}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 40px",
+                  alignItems: "center",
+                  columnGap: "36px",
+                  whiteSpace: "pre-line",
+                  fontSize: "14px",
+                  color: "rgba(85, 68, 30, 1)",
+                }}
+              >
+                <span>• {item.text}</span>
+                <Checkbox
+                  checked={checkedItems[index]}
+                  onChange={() => handleCheck(index)}
+                />
+              </div>
+            ))}
           </Flex>
         </Flex>
         <Flex
@@ -609,10 +828,12 @@ ex) 셀카 or 스튜디오 보정본`}
       </Flex>
       <Flex vertical>
         <Button
+          onClick={handleFormUpload}
           htmlType="submit"
           icon={<BsCaretRightFill />}
           iconPosition="end"
           type="primary"
+          disabled={checkedItems.filter((item) => item).length < 4}
           style={{
             width: "auto",
             paddingInline: "16px",
