@@ -25,15 +25,17 @@ admin.initializeApp({
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // 📌 라우터 설정
+const adminRoutes = require("./routes/admin");
 const authRoutes = require("./routes/auth");
 const orderRoutes = require("./routes/order");
 
+app.use("/admin", adminRoutes);
 app.use("/auth", authRoutes);
 app.use("/order", orderRoutes);
 
 const { uploadFile, upload } = require("./routes/uploader");
 
-app.post("/upload", upload.single("file"), uploadFile);
+app.post("/upload", upload.single("file"), uploadFile); // multer 미들웨어 사용
 
 const PORT = process.env.PORT || 8080;
 

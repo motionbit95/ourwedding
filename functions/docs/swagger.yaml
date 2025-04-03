@@ -236,6 +236,116 @@ paths:
         "500":
           description: "서버 오류"
 
+  /admin/signup:
+    post:
+      summary: "관리자 회원가입"
+      description: "새로운 관리자를 등록합니다."
+      tags:
+        - 관리자 (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                admin_id:
+                  type: string
+                  example: "admin01"
+                admin_pw:
+                  type: string
+                  example: "securepassword"
+      responses:
+        "201":
+          description: "관리자 회원가입 성공"
+        "400":
+          description: "잘못된 요청 (입력값 오류 또는 중복 아이디)"
+        "500":
+          description: "서버 오류"
+
+  /admin/login:
+    post:
+      summary: "관리자 로그인"
+      description: "관리자가 로그인하면 JWT 토큰을 반환합니다."
+      tags:
+        - 관리자 (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                admin_id:
+                  type: string
+                  example: "admin01"
+                admin_pw:
+                  type: string
+                  example: "securepassword"
+      responses:
+        "200":
+          description: "로그인 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "관리자 로그인 성공"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsIn..."
+                  lastActiveAt:
+                    type: string
+                    format: date-time
+                    example: "2025-04-03T12:00:00Z"
+        "400":
+          description: "아이디 또는 비밀번호 오류"
+        "500":
+          description: "서버 오류"
+
+  /admin:
+    get:
+      summary: "관리자 목록 조회"
+      description: "등록된 관리자 목록을 반환합니다."
+      tags:
+        - 관리자 (Admin)
+      responses:
+        "200":
+          description: "관리자 목록 조회 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/Admin"
+        "404":
+          description: "등록된 관리자가 없음"
+        "500":
+          description: "서버 오류"
+
+  /admin/{admin_id}:
+    delete:
+      summary: "관리자 탈퇴"
+      description: "특정 관리자를 삭제합니다."
+      tags:
+        - 관리자 (Admin)
+      parameters:
+        - name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "삭제할 관리자 ID"
+      responses:
+        "200":
+          description: "관리자 탈퇴 성공"
+        "400":
+          description: "존재하지 않는 관리자 ID"
+        "500":
+          description: "서버 오류"
+
 ### 🛠 **공통 스키마 (Schemas)**
 components:
   schemas:
@@ -274,6 +384,21 @@ components:
         referenceDownload:
           type: string
           example: "https://drive.google.com/..."
+
+    Admin:
+      type: object
+      properties:
+        admin_id:
+          type: string
+          example: "admin01"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-04-03T12:00:00Z"
+        lastActiveAt:
+          type: string
+          format: date-time
+          example: "2025-04-03T15:30:00Z"
 
   securitySchemes:
     bearerAuth:
