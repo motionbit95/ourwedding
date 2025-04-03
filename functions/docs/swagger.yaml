@@ -11,3 +11,101 @@ info:
     - `https://example.a.run.app`
 
 paths:
+  /auth/signup:
+    post:
+      tags:
+        - Auth
+      summary: User signup
+      description: Register a new user with a Naver ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_name:
+                  type: string
+                  example: "John Doe"
+                naver_id:
+                  type: string
+                  example: "john_naver"
+      responses:
+        "201":
+          description: Signup successful
+        "400":
+          description: Bad request, missing parameters or duplicate user
+        "500":
+          description: Server error
+
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: User login
+      description: Authenticate user and return a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_name:
+                  type: string
+                  example: "John Doe"
+                naver_id:
+                  type: string
+                  example: "john_naver"
+      responses:
+        "200":
+          description: Login successful, returns JWT token
+        "400":
+          description: Invalid credentials
+        "500":
+          description: Server error
+
+  /auth/verify-token:
+    post:
+      tags:
+        - Auth
+      summary: Verify JWT token
+      description: Validate JWT token and return user data.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Token verification successful
+        "401":
+          description: Invalid or missing token
+
+  /upload:
+    post:
+      tags:
+        - Util
+      summary: File upload
+      description: Upload a single file.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: File uploaded successfully
+        "400":
+          description: Bad request, file missing or invalid format
+        "500":
+          description: Server error
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

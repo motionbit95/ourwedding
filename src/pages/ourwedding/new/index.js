@@ -201,22 +201,43 @@ function NewRequest() {
     setFormData((prev) => ({ ...prev, additionalOptions: checkedValues }));
   };
 
-  const handleFormUpload = () => {
+  const handleFormUpload = async () => {
     console.log("upload");
     console.log(formData);
 
     // 사용 예시
-    uploadFiles(photoList);
+    const file = await uploadFiles(
+      photoList,
+      formData.userName,
+      formData.userId
+    );
+
+    console.log(file[0].downloadLink);
 
     // console.log(JSON.stringify(photoList));
     // console.log(JSON.stringify(referenceFileList));
   };
 
-  const uploadFiles = async (fileList) => {
+  const uploadFiles = async (fileList, userName, userId) => {
     try {
-      const uploadPromises = fileList.map(async (file) => {
+      const uploadPromises = fileList.map(async (file, index) => {
         const formData = new FormData();
-        formData.append("file", file.originFileObj); // 실제 파일 추가
+
+        // 새로운 파일명 생성 (예: 원본 확장자 유지)
+        const originalName = file.originFileObj.name;
+        const fileExtension = originalName.substring(
+          originalName.lastIndexOf(".")
+        ); // 확장자 추출
+
+        // 새로운 파일명 생성 (index 추가, 한글 인코딩 적용)
+        const rawFileName = `아워웨딩_신규_${userName}_${userId}_${
+          index + 1
+        }${fileExtension}`;
+
+        const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
+
+        // 파일을 새로운 이름으로 추가
+        formData.append("file", file.originFileObj, newFileName);
 
         const response = await fetch("http://localhost:8080/upload", {
           method: "POST",
@@ -233,6 +254,8 @@ function NewRequest() {
       // 모든 파일 업로드 실행
       const results = await Promise.all(uploadPromises);
       console.log("📤 모든 파일 업로드 성공:", results);
+
+      return results;
     } catch (error) {
       console.error("❌ 파일 업로드 중 오류 발생:", error.message);
     }
