@@ -175,7 +175,7 @@ const uploadFile = async (req, res) => {
     // 5️⃣ 파일 업로드
     const filePath = req.file.path; // ✅ multer가 저장한 실제 파일 경로 사용
     const fileMetadata = {
-      name: finalFileName,
+      name: decodedFileName,
       parents: [userFolderId], // 사용자 폴더에 저장
     };
     const media = {

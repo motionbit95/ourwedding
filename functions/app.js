@@ -26,8 +26,10 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // 📌 라우터 설정
 const authRoutes = require("./routes/auth");
+const orderRoutes = require("./routes/order");
 
 app.use("/auth", authRoutes);
+app.use("/order", orderRoutes);
 
 const { uploadFile, upload } = require("./routes/uploader");
 

@@ -3,20 +3,26 @@ info:
   title: "아워웨딩 - Firebase Functions API"
   version: "1.0.0"
   description: |
-    ## 🚀 Endpoint
-    배포가 완료되면 아래 주소에서 API를 확인할 수 있습니다.
+    ## 🚀 API 엔드포인트 안내
+    배포 완료 후 아래 주소에서 API를 확인할 수 있습니다.
 
     - `https://example.cloudfunctions.net/api`
-      <br>  <br>
     - `https://example.a.run.app`
 
+servers:
+  - url: "https://example.cloudfunctions.net/api"
+    description: "메인 API 서버"
+  - url: "https://example.a.run.app"
+    description: "백업 API 서버"
+
 paths:
+  ### 🔐 **인증 API**
   /auth/signup:
     post:
       tags:
-        - Auth
-      summary: User signup
-      description: Register a new user with a Naver ID.
+        - 인증 (Auth)
+      summary: "회원가입"
+      description: "네이버 ID를 사용하여 신규 회원을 등록합니다."
       requestBody:
         required: true
         content:
@@ -26,24 +32,24 @@ paths:
               properties:
                 user_name:
                   type: string
-                  example: "John Doe"
+                  example: "박수정"
                 naver_id:
                   type: string
-                  example: "john_naver"
+                  example: "krystal_naver"
       responses:
         "201":
-          description: Signup successful
+          description: "회원가입 성공"
         "400":
-          description: Bad request, missing parameters or duplicate user
+          description: "잘못된 요청 (필수 값 누락 또는 중복 ID)"
         "500":
-          description: Server error
+          description: "서버 오류"
 
   /auth/login:
     post:
       tags:
-        - Auth
-      summary: User login
-      description: Authenticate user and return a JWT token.
+        - 인증 (Auth)
+      summary: "로그인"
+      description: "사용자 인증 후 JWT 토큰을 반환합니다."
       requestBody:
         required: true
         content:
@@ -53,38 +59,39 @@ paths:
               properties:
                 user_name:
                   type: string
-                  example: "John Doe"
+                  example: "박수정"
                 naver_id:
                   type: string
-                  example: "john_naver"
+                  example: "krystal_naver"
       responses:
         "200":
-          description: Login successful, returns JWT token
+          description: "로그인 성공 (JWT 토큰 반환)"
         "400":
-          description: Invalid credentials
+          description: "잘못된 로그인 정보"
         "500":
-          description: Server error
+          description: "서버 오류"
 
   /auth/verify-token:
     post:
       tags:
-        - Auth
-      summary: Verify JWT token
-      description: Validate JWT token and return user data.
+        - 인증 (Auth)
+      summary: "JWT 토큰 검증"
+      description: "JWT 토큰을 검증하고 사용자 데이터를 반환합니다."
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: Token verification successful
+          description: "토큰 검증 성공"
         "401":
-          description: Invalid or missing token
+          description: "유효하지 않거나 누락된 토큰"
 
+  ### 📤 **파일 업로드 API**
   /upload:
     post:
       tags:
-        - Util
-      summary: File upload
-      description: Upload a single file.
+        - 유틸리티 (Util)
+      summary: "파일 업로드"
+      description: "단일 파일을 업로드합니다."
       requestBody:
         required: true
         content:
@@ -97,13 +104,177 @@ paths:
                   format: binary
       responses:
         "200":
-          description: File uploaded successfully
+          description: "파일 업로드 성공"
         "400":
-          description: Bad request, file missing or invalid format
+          description: "잘못된 요청 (파일 누락 또는 형식 오류)"
         "500":
-          description: Server error
+          description: "서버 오류"
 
+  ### 🛍 **주문 API**
+  /order:
+    post:
+      summary: "새로운 주문 생성"
+      description: "주문 정보를 Firebase Realtime Database에 저장합니다."
+      tags:
+        - 주문 (Orders)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+      responses:
+        "200":
+          description: "주문 저장 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  orderId:
+                    type: string
+        "500":
+          description: "서버 오류"
+
+    get:
+      summary: "모든 주문 조회"
+      description: "저장된 모든 주문 목록을 조회합니다."
+      tags:
+        - 주문 (Orders)
+      responses:
+        "200":
+          description: "주문 목록 조회 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  orders:
+                    type: object
+                    additionalProperties:
+                      $ref: "#/components/schemas/Order"
+        "500":
+          description: "서버 오류"
+
+  /order/{orderId}:
+    get:
+      summary: "특정 주문 조회"
+      description: "주문 ID를 이용하여 특정 주문을 조회합니다."
+      tags:
+        - 주문 (Orders)
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "조회할 주문의 ID"
+      responses:
+        "200":
+          description: "주문 조회 성공"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  order:
+                    $ref: "#/components/schemas/Order"
+        "404":
+          description: "주문을 찾을 수 없음"
+        "500":
+          description: "서버 오류"
+
+    put:
+      summary: "주문 수정"
+      description: "특정 주문을 수정합니다."
+      tags:
+        - 주문 (Orders)
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "수정할 주문의 ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Order"
+      responses:
+        "200":
+          description: "주문 수정 성공"
+        "404":
+          description: "주문을 찾을 수 없음"
+        "500":
+          description: "서버 오류"
+
+    delete:
+      summary: "주문 삭제"
+      description: "특정 주문을 삭제합니다."
+      tags:
+        - 주문 (Orders)
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: "삭제할 주문의 ID"
+      responses:
+        "200":
+          description: "주문 삭제 성공"
+        "404":
+          description: "주문을 찾을 수 없음"
+        "500":
+          description: "서버 오류"
+
+### 🛠 **공통 스키마 (Schemas)**
 components:
+  schemas:
+    Order:
+      type: object
+      properties:
+        userName:
+          type: string
+          example: "박수정"
+        userId:
+          type: string
+          example: "krystal"
+        receivedDate:
+          type: string
+          format: date
+          example: "2025-04-03"
+        orderNumber:
+          type: string
+          example: "asdf"
+        grade:
+          type: string
+          example: "2 새싹"
+        photoCount:
+          type: string
+          example: "6"
+        additionalOptions:
+          type: array
+          items:
+            type: string
+          example: ["person"]
+        photoDownload:
+          type: array
+          items:
+            type: string
+          example: ["https://drive.google.com/..."]
+        referenceDownload:
+          type: string
+          example: "https://drive.google.com/..."
+
   securitySchemes:
     bearerAuth:
       type: http

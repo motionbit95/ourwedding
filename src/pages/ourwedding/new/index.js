@@ -184,7 +184,7 @@ function NewRequest() {
     receivedDate: formattedDate || "",
     orderNumber: "",
     grade: "",
-    photoCount: "",
+    photoCount: 0,
     additionalOptions: [],
   });
 
@@ -205,17 +205,53 @@ function NewRequest() {
     console.log("upload");
     console.log(formData);
 
-    // 사용 예시
     const file = await uploadFiles(
       photoList,
       formData.userName,
       formData.userId
     );
 
-    console.log(file[0].downloadLink);
+    const referenceFile = await uploadReferenceFiles(
+      referenceFileList,
+      formData.userName,
+      formData.userId
+    );
 
-    // console.log(JSON.stringify(photoList));
-    // console.log(JSON.stringify(referenceFileList));
+    // ✅ downloadLink 값만 저장하는 배열 생성
+    const downloadLinkAddr = file.map((f) => f.downloadLink);
+
+    console.log(referenceFile);
+
+    console.log({
+      ...formData,
+      photoDownload: downloadLinkAddr,
+      referenceDownload: referenceFile?.downloadLink,
+    });
+
+    const order = {
+      ...formData,
+      photoDownload: downloadLinkAddr,
+      referenceDownload: referenceFile?.downloadLink,
+    };
+
+    try {
+      const { data } = await axios.post(
+        "http://localhost:8080/order", // ✅ 여기에 실제 API 엔드포인트 입력
+        order,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (data.success) {
+        alert(`✅ 주문이 성공적으로 저장되었습니다! 주문 ID: ${data.orderId}`);
+      } else {
+        alert("❌ 주문 저장 실패");
+      }
+    } catch (error) {
+      console.error("❌ 오류 발생:", error);
+      alert("🚨 서버 오류");
+    }
   };
 
   const uploadFiles = async (fileList, userName, userId) => {
@@ -256,6 +292,50 @@ function NewRequest() {
       console.log("📤 모든 파일 업로드 성공:", results);
 
       return results;
+    } catch (error) {
+      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
+    }
+  };
+
+  const uploadReferenceFiles = async (fileList, userName, userId) => {
+    try {
+      if (fileList.length === 0) {
+        throw new Error("업로드할 파일이 없습니다.");
+      }
+
+      const formData = new FormData();
+
+      // ✅ 참고 사진의 원본 파일명 가져오기
+      const originalName = fileList[0].originFileObj.name;
+      const fileExtension = originalName.substring(
+        originalName.lastIndexOf(".")
+      ); // 확장자 추출
+
+      // ✅ 참고 사진의 원본 파일명 (확장자 제외)
+      const referenceName = "참고";
+
+      // ✅ 새로운 파일명 생성 (참고 사진 이름 적용)
+      const rawFileName = `아워웨딩_신규_${userName}_${userId}_${referenceName}${fileExtension}`;
+
+      const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
+
+      // ✅ 파일을 새로운 이름으로 추가
+      formData.append("file", fileList[0].originFileObj, newFileName);
+
+      // ✅ 파일 업로드 요청
+      const response = await fetch("http://localhost:8080/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`서버 응답 실패: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("📤 파일 업로드 성공:", result);
+
+      return result;
     } catch (error) {
       console.error("❌ 파일 업로드 중 오류 발생:", error.message);
     }
