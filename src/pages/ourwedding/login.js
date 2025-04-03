@@ -15,6 +15,8 @@ import { BsCaretRightFill } from "react-icons/bs";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 
+const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
+
 function Login(props) {
   const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
@@ -45,7 +47,7 @@ function Login(props) {
 
   const onFinish = (values) => {
     axios
-      .post("https://api-54hk753mxa-uc.a.run.app/auth/login", values)
+      .post(`${API_URL}/auth/login`, values)
       .then((response) => {
         messageApi.open({
           type: "success",
@@ -62,7 +64,7 @@ function Login(props) {
           if (error.response.data.code === -1001) {
             // 정보가 없음 - 회원가입 후 이동
             axios
-              .post("https://api-54hk753mxa-uc.a.run.app/auth/signup", values)
+              .post(`${API_URL}/auth/signup`, values)
               .then((response) => {
                 // messageApi.open({
                 //   type: "success",

@@ -4,13 +4,15 @@ import { FiLink } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
+
 function Ourwedding(props) {
   const navigation = useNavigate();
 
   const verifyToken = (page) => {
     axios
       .post(
-        "https://api-54hk753mxa-uc.a.run.app/auth/verify-token",
+        `${API_URL}/auth/verify-token`,
         {},
         {
           headers: {

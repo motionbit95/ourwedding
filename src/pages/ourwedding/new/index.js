@@ -21,6 +21,8 @@ import { MdAttachFile } from "react-icons/md";
 import { FiFilePlus } from "react-icons/fi";
 import { BsCaretRightFill } from "react-icons/bs";
 
+const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
+
 // Constants
 const GRADES = [
   ["S 샘플", "4일이내"],
@@ -236,7 +238,7 @@ function NewRequest() {
 
     try {
       const { data } = await axios.post(
-        "http://localhost:8080/order", // ✅ 여기에 실제 API 엔드포인트 입력
+        `${API_URL}/order`, // ✅ 여기에 실제 API 엔드포인트 입력
         order,
         {
           headers: { "Content-Type": "application/json" },
@@ -275,7 +277,7 @@ function NewRequest() {
         // 파일을 새로운 이름으로 추가
         formData.append("file", file.originFileObj, newFileName);
 
-        const response = await fetch("http://localhost:8080/upload", {
+        const response = await fetch(`${API_URL}/upload`, {
           method: "POST",
           body: formData,
         });
@@ -323,7 +325,7 @@ function NewRequest() {
       formData.append("file", fileList[0].originFileObj, newFileName);
 
       // ✅ 파일 업로드 요청
-      const response = await fetch("http://localhost:8080/upload", {
+      const response = await fetch(`${API_URL}/upload`, {
         method: "POST",
         body: formData,
       });
@@ -346,7 +348,7 @@ function NewRequest() {
     const verifyToken = async () => {
       try {
         const response = await axios.post(
-          "https://api-54hk753mxa-uc.a.run.app/auth/verify-token",
+          `${API_URL}/auth/verify-token`,
           {},
           {
             headers: {
@@ -850,104 +852,108 @@ ex) 셀카 or 스튜디오 보정본`}
         Ourdrama
       </Divider>
 
-      <Flex
-        style={{
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: -parseInt(fontSize.replace("px")),
-          paddingInline: paddingBox,
-        }}
-      >
-        <Typography
-          style={{
-            width: "100%",
-            maxWidth: "900px",
-            color: "transparent",
-            WebkitTextStroke: "0.6px #A79166",
-            fontFamily: "Rufina",
-            fontWeight: 400,
-            fontSize: parseInt(fontSize.replace("px")) * 1.3,
-          }}
-        >
-          Caution
-        </Typography>
-      </Flex>
-      <Flex
-        vertical
-        style={{
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "rgba(192, 176, 152, 0.3)",
-        }}
-      >
-        <Flex
-          style={{
-            paddingInline: paddingBox,
-            paddingBlock: paddingBlock,
-          }}
-        >
-          <Flex
-            vertical
-            style={{
-              maxWidth: "900px",
-            }}
-            gap={"24px"}
-          >
-            {CAUTION_ITEMS.map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 40px",
-                  alignItems: "center",
-                  columnGap: "36px",
-                  whiteSpace: "pre-line",
-                  fontSize: "14px",
-                  color: "rgba(85, 68, 30, 1)",
-                }}
-              >
-                <span>• {item.text}</span>
-                <Checkbox
-                  checked={checkedItems[index]}
-                  onChange={() => handleCheck(index)}
-                />
-              </div>
-            ))}
-          </Flex>
-        </Flex>
+      <Flex vertical>
         <Flex
           style={{
             alignItems: "center",
             justifyContent: "center",
-            width: "100%",
-            marginBottom: "16px",
-            backgroundColor: "rgba(255, 255, 255, 0.4)",
+            marginBottom: -parseInt(fontSize.replace("px")),
+            paddingInline: paddingBox,
           }}
         >
-          <Typography style={{ padding: 4 }}>
-            • 위의 내용을 모두 숙지했습니다{" "}
+          <Typography
+            style={{
+              width: "100%",
+              maxWidth: "900px",
+              color: "transparent",
+              WebkitTextStroke: "0.6px #A79166",
+              fontFamily: "Rufina",
+              fontWeight: 400,
+              fontSize: parseInt(fontSize.replace("px")) * 1.3,
+            }}
+          >
+            Caution
           </Typography>
         </Flex>
-      </Flex>
-      <Flex vertical>
-        <Button
-          onClick={handleFormUpload}
-          htmlType="submit"
-          icon={<BsCaretRightFill />}
-          iconPosition="end"
-          type="primary"
-          disabled={checkedItems.filter((item) => item).length < 4}
+
+        <Flex
+          vertical
           style={{
-            width: "auto",
-            paddingInline: "16px",
-            alignSelf: "center",
-            marginTop: "36px",
-            marginBottom: paddingBlock,
-            paddingInline: "48px",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "rgba(192, 176, 152, 0.3)",
           }}
         >
-          업로드
-        </Button>
+          <Flex
+            style={{
+              paddingInline: paddingBox,
+              paddingBlock: paddingBlock,
+            }}
+          >
+            <Flex
+              vertical
+              style={{
+                maxWidth: "900px",
+              }}
+              gap={"24px"}
+            >
+              {CAUTION_ITEMS.map((item, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 40px",
+                    alignItems: "center",
+                    columnGap: "36px",
+                    whiteSpace: "pre-line",
+                    fontSize: "14px",
+                    color: "rgba(85, 68, 30, 1)",
+                  }}
+                >
+                  <span>• {item.text}</span>
+                  <Checkbox
+                    checked={checkedItems[index]}
+                    onChange={() => handleCheck(index)}
+                  />
+                </div>
+              ))}
+            </Flex>
+          </Flex>
+          <Flex
+            style={{
+              alignItems: "center",
+              justifyContent: "center",
+              width: "100%",
+              marginBottom: "16px",
+              backgroundColor: "rgba(255, 255, 255, 0.4)",
+            }}
+          >
+            <Typography style={{ padding: 4 }}>
+              • 위의 내용을 모두 숙지했습니다{" "}
+            </Typography>
+          </Flex>
+        </Flex>
+
+        <Flex vertical>
+          <Button
+            onClick={handleFormUpload}
+            htmlType="submit"
+            icon={<BsCaretRightFill />}
+            iconPosition="end"
+            type="primary"
+            disabled={checkedItems.filter((item) => item).length < 4}
+            style={{
+              width: "auto",
+              paddingInline: "16px",
+              alignSelf: "center",
+              marginTop: "36px",
+              marginBottom: paddingBlock,
+              paddingInline: "48px",
+            }}
+          >
+            업로드
+          </Button>
+        </Flex>
       </Flex>
 
       <style>
