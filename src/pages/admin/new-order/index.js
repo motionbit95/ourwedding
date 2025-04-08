@@ -173,7 +173,7 @@ function NewOrder() {
             style={{
               width: 20,
               height: 20,
-              backgroundColor: "rgba(244, 224, 217, 1)",
+              backgroundColor: "rgba(244, 251, 255, 1)",
             }}
           />
           <div>신규</div>
@@ -203,8 +203,13 @@ function NewOrder() {
           dataSource={orders}
           rowKey="id"
           pagination={{ pageSize: 10 }}
-          rowClassName={(record) =>
-            record.division === "샘플" ? "sample-row" : ""
+          rowClassName={
+            (record) =>
+              record.division === "샘플"
+                ? "sample-row"
+                : record.division === "신규"
+                ? "new-row "
+                : "revision-row " // 재수정
           }
           scroll={{ x: "max-content" }} // 👉 가로 스크롤
         />
@@ -215,11 +220,16 @@ function NewOrder() {
           background-color: rgba(234, 244, 233, 1) !important;
         }
 
+        .new-row {
+          background-color: rgba(244, 251, 255, 1) !important;
+        }
+
+        .revision-row {
+          background-color: rgba(248, 236, 236, 1) !important;
+        }
+
         th.highlight-header {
           background-color: rgba(255, 250, 215, 1) !important;
-        }
-        .ant-table-wrapper .ant-pagination {
-          justify-content: center !important;
         }
       `}</style>
     </div>

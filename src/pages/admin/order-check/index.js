@@ -130,7 +130,7 @@ function OrderPage() {
             style={{
               width: 20,
               height: 20,
-              backgroundColor: "rgba(244, 224, 217, 1)",
+              backgroundColor: "rgba(244, 251, 255, 1)",
             }}
           />
           <div>신규</div>
@@ -160,8 +160,13 @@ function OrderPage() {
           dataSource={orders} // 이제 순수 order 객체 배열!
           rowKey="id"
           pagination={{ pageSize: 10 }}
-          rowClassName={(record) =>
-            record.division === "샘플" ? "sample-row" : ""
+          rowClassName={
+            (record) =>
+              record.division === "샘플"
+                ? "sample-row"
+                : record.division === "신규"
+                ? "new-row "
+                : "revision-row " // 재수정
           }
         />
       </div>
@@ -169,6 +174,14 @@ function OrderPage() {
       <style jsx>{`
         .sample-row {
           background-color: rgba(234, 244, 233, 1) !important;
+        }
+
+        .new-row {
+          background-color: rgba(244, 251, 255, 1) !important;
+        }
+
+        .revision-row {
+          background-color: rgba(248, 236, 236, 1) !important;
         }
 
         th.highlight-header {
