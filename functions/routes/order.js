@@ -96,6 +96,27 @@ router.get("/filter", async (req, res) => {
   }
 });
 
+// ✅ 특정 userId의 주문 내역 조회
+router.get("/user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const snapshot = await db.ref("orders").once("value");
+    const orders = snapshot.val() || {};
+
+    const userOrders = Object.entries(orders)
+      .filter(([_, order]) => order.userId === userId)
+      .map(([id, order]) => ({
+        id,
+        ...order,
+      }));
+
+    res.status(200).json({ success: true, orders: userOrders });
+  } catch (error) {
+    console.error("userId 주문 조회 실패:", error);
+    res.status(500).json({ success: false, message: "주문 조회 실패" });
+  }
+});
+
 // ✅ CREATE (주문 저장)
 router.post("/", async (req, res) => {
   try {
