@@ -131,16 +131,26 @@ function NewRequest() {
     });
   }, []);
 
-  // Memoized values
   const formattedDate = useMemo(() => {
-    return new Date()
+    const now = new Date();
+
+    const datePart = now
       .toLocaleDateString("ko-KR", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
       })
-      .replace(/. /g, "-")
-      .replace(".", "");
+      .replace(/\. /g, "-")
+      .replace(/\./g, "");
+
+    const timePart = now.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+
+    return `${datePart} ${timePart}`;
   }, []);
 
   const fontSize = useMemo(() => {
@@ -204,9 +214,6 @@ function NewRequest() {
   };
 
   const handleFormUpload = async () => {
-    console.log("upload");
-    console.log(formData);
-
     const file = await uploadFiles(
       photoList,
       formData.userName,
@@ -222,7 +229,7 @@ function NewRequest() {
     // ✅ downloadLink 값만 저장하는 배열 생성
     const downloadLinkAddr = file.map((f) => f.downloadLink);
 
-    console.log(referenceFile);
+    console.log("다운로드", downloadLinkAddr);
 
     console.log({
       ...formData,
@@ -234,6 +241,9 @@ function NewRequest() {
       ...formData,
       photoDownload: downloadLinkAddr,
       referenceDownload: referenceFile?.downloadLink,
+      company: "아워웨딩",
+      division: formData.grade === "S 샘플" ? "샘플" : "신규",
+      step: "신규",
     };
 
     try {

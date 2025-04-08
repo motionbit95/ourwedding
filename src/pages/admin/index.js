@@ -1,10 +1,5 @@
 import React, { useEffect } from "react";
 import {
-  LaptopOutlined,
-  NotificationOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
-import {
   Breadcrumb,
   Button,
   Layout,
@@ -14,19 +9,22 @@ import {
   Typography,
 } from "antd";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import OrderPage from "./order-check";
+import NewOrder from "./new-order";
 
 const { Header, Content, Sider } = Layout;
 
 // 메뉴 항목 정의
 const menuItems = [
-  { key: "dashboard", label: "Dashboard", icon: <UserOutlined /> },
-  { key: "reports", label: "Reports", icon: <LaptopOutlined /> },
-  { key: "settings", label: "Settings", icon: <NotificationOutlined /> },
+  { key: "order-check", label: "주문확인" },
+  { key: "new-order", label: "신규" },
+  { key: "recalibration", label: "재보정" },
+  { key: "prework", label: "선작업" },
+  { key: "worker-status", label: "작업자현황" },
+  { key: "file-transfer", label: "파일전송" },
 ];
 
 // 각 페이지 컴포넌트
-const DashboardPage = () => <div>📊 Dashboard Content</div>;
-const ReportsPage = () => <div>📜 Reports Content</div>;
 const SettingsPage = () => <div>⚙️ Settings Content</div>;
 
 // 사이드바 메뉴 컴포넌트
@@ -60,7 +58,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <Layout style={{ height: "100vh" }}>
+    <Layout style={{ height: "100vh", minWidth: "900px" }}>
       <style>
         @import
         url('https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&display=swap');
@@ -82,7 +80,7 @@ const Dashboard = () => {
               fontFamily: "Rufina",
             }}
           >
-            Wokers page
+            Administrators page
           </Typography.Text>
           <Typography.Text style={{ color: "white" }}>
             관리자 페이지
@@ -110,10 +108,10 @@ const Dashboard = () => {
 
         {/* Content 영역 (변경되는 부분) */}
         <Layout style={{ flex: 1, padding: 24, overflow: "auto" }}>
-          <Breadcrumb
+          {/* <Breadcrumb
             items={[{ title: "Home" }, { title: "List" }, { title: "App" }]}
             style={{ margin: "16px 0" }}
-          />
+          /> */}
           <Content
             style={{
               flex: 1,
@@ -125,9 +123,9 @@ const Dashboard = () => {
           >
             {/* 페이지 변경되는 부분 */}
             <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="reports" element={<ReportsPage />} />
+              <Route path="/" element={<OrderPage />} />
+              <Route path="order-check" element={<OrderPage />} />
+              <Route path="new-order" element={<NewOrder />} />
               <Route path="settings" element={<SettingsPage />} />
             </Routes>
           </Content>

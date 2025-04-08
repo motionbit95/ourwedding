@@ -19,6 +19,7 @@ const serviceAccount = {
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://ourwedding-cc953-default-rtdb.firebaseio.com",
+  storageBucket: "ourwedding-cc953.firebasestorage.app",
 });
 
 // 📌 Swagger UI 설정 ("/docs" 경로에서 문서 확인 가능)
@@ -32,6 +33,7 @@ const orderRoutes = require("./routes/order");
 app.use("/admin", adminRoutes);
 app.use("/auth", authRoutes);
 app.use("/order", orderRoutes);
+app.use("/", require("./routes/downloader"));
 
 const { uploadFile, upload } = require("./routes/uploader");
 
