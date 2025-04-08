@@ -604,6 +604,7 @@ function RevisionRequest() {
                       color: "white",
                       width: "100%",
                     }}
+                    onClick={() => navigation("form", { state: { order } })}
                   >
                     재수정 신청
                   </Button>

@@ -7,6 +7,7 @@ import Login from "./pages/ourwedding/login";
 import AdminLogin from "./pages/admin/login";
 import AdminSignup from "./pages/admin/signup";
 import Dashboard from "./pages/admin";
+import RevisionForm from "./pages/ourwedding/revison/form";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/ourwedding/login" element={<Login />} />
         <Route path="/ourwedding/new" element={<NewRequest />} />
         <Route path="/ourwedding/revison" element={<RevisionRequest />} />
+        <Route path="/ourwedding/revison/form" element={<RevisionForm />} />
 
         {/* 관리자 */}
         <Route path={"/admin/*"} element={<Dashboard />} />
