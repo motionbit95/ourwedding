@@ -95,7 +95,7 @@ function OrderPage() {
       align: "center",
       key: "photoInfo",
       render: (_, record) => {
-        const count = record.photoCount || "0";
+        const count = record.photoDownload.length || "0";
         const options = Array.isArray(record.additionalOptions)
           ? record.additionalOptions
               .map((opt) => ADDITIONAL_OPTION_MAP[opt] || opt)

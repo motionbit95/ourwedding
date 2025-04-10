@@ -10,6 +10,7 @@ import {
   Modal,
   Select,
   Space,
+  Spin,
   Typography,
   Upload,
   message,
@@ -20,6 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { MdAttachFile } from "react-icons/md";
 import { FiFilePlus } from "react-icons/fi";
 import { BsCaretRightFill } from "react-icons/bs";
+import { LoadingOutlined } from "@ant-design/icons";
 import {
   getStorage,
   ref,
@@ -29,6 +31,7 @@ import {
 } from "firebase/storage";
 
 import { storage } from "../../../firebaseConfig";
+import dayjs from "dayjs";
 
 const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
 
@@ -92,6 +95,8 @@ function NewRequest() {
   const [referenceFileList, setReferenceFileList] = useState([]); // 레퍼런스 파일 리스트
 
   const [testFile, setTestFile] = useState();
+  const [comment, setComment] = useState();
+  const [isLoading, setLoading] = useState();
 
   const updateFile = async (e) => {
     try {
@@ -255,7 +260,30 @@ function NewRequest() {
     setFormData((prev) => ({ ...prev, additionalOptions: checkedValues }));
   };
 
+  // 등급에서 기간 가져오기
+  const getDurationByGrade = (grade) => {
+    const found = GRADES.find(([g]) => g === grade);
+    return found?.[1];
+  };
+
+  // 기간으로 deadline 구하기
+  const getDeadline = (duration) => {
+    const now = dayjs();
+
+    if (!duration) return "알 수 없음";
+
+    if (duration.includes("일")) {
+      const days = parseInt(duration);
+      return now.add(days, "day").format("YYYY-MM-DD");
+    } else if (duration.includes("시간")) {
+      const hours = parseInt(duration);
+      return now.add(hours, "hour").format("YYYY-MM-DD HH:mm");
+    }
+    return "알 수 없음";
+  };
+
   const handleFormUpload = async () => {
+    setLoading(true);
     const file = await uploadFiles(
       photoList,
       formData.userName,
@@ -271,13 +299,8 @@ function NewRequest() {
     // ✅ downloadLink 값만 저장하는 배열 생성
     const downloadLinkAddr = file.map((f) => f.downloadLink);
 
-    console.log("다운로드", downloadLinkAddr);
-
-    console.log({
-      ...formData,
-      photoDownload: downloadLinkAddr,
-      referenceDownload: referenceFile?.downloadLink,
-    });
+    const duration = getDurationByGrade(formData.grade);
+    const deadline = getDeadline(duration);
 
     const order = {
       ...formData,
@@ -285,8 +308,14 @@ function NewRequest() {
       referenceDownload: referenceFile?.downloadLink,
       company: "아워웨딩",
       division: formData.grade === "S 샘플" ? "샘플" : "신규",
-      step: "신규",
+      step:
+        formData.grade === "S 샘플"
+          ? `샘플 작업중 (완료 예정일: ${deadline})`
+          : `1차 보정본 작업중 (완료 예정일: ${deadline})`,
+      comment: comment,
     };
+
+    console.log(order);
 
     try {
       const { data } = await axios.post(
@@ -302,9 +331,12 @@ function NewRequest() {
       } else {
         alert("❌ 주문 저장 실패");
       }
+
+      setLoading(false);
     } catch (error) {
       console.error("❌ 오류 발생:", error);
       alert("🚨 서버 오류");
+      setLoading(false);
     }
   };
 
@@ -450,6 +482,20 @@ function NewRequest() {
       }}
     >
       {contextHolder}
+      <div
+        style={{
+          display: isLoading ? "flex" : "none",
+          position: "fixed",
+          zIndex: 99,
+          backgroundColor: "rgba(0, 0, 0, 0.3)",
+          width: "100%",
+          height: "100vh",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
+      </div>
       <Flex vertical style={{ alignItems: "center", justifyContent: "center" }}>
         <Flex
           vertical
@@ -473,7 +519,7 @@ function NewRequest() {
             }}
           />
         </Flex>
-        <Input type="file" onChange={updateFile} />
+        {/* <Input type="file" onChange={updateFile} /> */}
         <Form
           labelCol={{ span: 8 }}
           wrapperCol={{ span: 16 }}
@@ -880,6 +926,24 @@ ex) 셀카 or 스튜디오 보정본`}
                 </Flex>
               </Typography.Paragraph>
             </div>
+
+            <Input.TextArea
+              rows={12}
+              autoSize={true}
+              onChange={(e) => setComment(e.target.value)}
+              defaultValue={`1. 보정강도 (약,약중,중,중강,강)
+(추천 : 자연스러운 보정을 위해 생각하시는 보정단계보다 한단계 낮춰서 진행 하시는걸 추천드립니다 ! )
+
+▶️
+2. 전체 사진 공통 요청사항
+
+신랑 :
+신부 :
+3. 개별 추가 요청사항
+(밝기 조절은 기재 해주시면 가능합니다.) (색감작업은 아워웨딩 유료 필름 결제 해주셔야 합니다.)
+
+▶️ 파일명 - 요청사항 :`}
+            />
           </Flex>
         </Flex>
       </Flex>

@@ -21,6 +21,8 @@ import { MdAttachFile } from "react-icons/md";
 import { FiFilePlus } from "react-icons/fi";
 import { BsCaretRightFill } from "react-icons/bs";
 
+import dayjs from "dayjs";
+
 const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
 
 // Constants
@@ -86,6 +88,7 @@ function RevisionRequest() {
   const [referenceFileList, setReferenceFileList] = useState([]); // 레퍼런스 파일 리스트
 
   const [orders, setOrders] = useState([]);
+  const [isLoading, setLoading] = useState();
 
   useEffect(() => {
     // 특정 유저의 접수 리스트
@@ -198,182 +201,6 @@ function RevisionRequest() {
     return "20px";
   }, [screens]);
 
-  // Handlers
-  const handleChange = useCallback((checkedValues) => {
-    setSelectedValue((prev) =>
-      prev.includes(checkedValues)
-        ? prev.filter((value) => value !== checkedValues)
-        : [...prev, checkedValues]
-    );
-  }, []);
-
-  const showModal = useCallback(() => setIsModalOpen(true), []);
-  const handleOk = useCallback(() => setIsModalOpen(false), []);
-  const handleCancel = useCallback(() => setIsModalOpen(false), []);
-
-  const [formData, setFormData] = useState({
-    userName: user?.user_name || "",
-    userId: user?.naver_id || "",
-    receivedDate: formattedDate || "",
-    orderNumber: "",
-    grade: "",
-    photoCount: 0,
-    additionalOptions: [],
-  });
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (value) => {
-    setFormData((prev) => ({ ...prev, grade: value }));
-  };
-
-  const handleCheckboxChange = (checkedValues) => {
-    setFormData((prev) => ({ ...prev, additionalOptions: checkedValues }));
-  };
-
-  const handleFormUpload = async () => {
-    const file = await uploadFiles(
-      photoList,
-      formData.userName,
-      formData.userId
-    );
-
-    const referenceFile = await uploadReferenceFiles(
-      referenceFileList,
-      formData.userName,
-      formData.userId
-    );
-
-    // ✅ downloadLink 값만 저장하는 배열 생성
-    const downloadLinkAddr = file.map((f) => f.downloadLink);
-
-    console.log("다운로드", downloadLinkAddr);
-
-    console.log({
-      ...formData,
-      photoDownload: downloadLinkAddr,
-      referenceDownload: referenceFile?.downloadLink,
-    });
-
-    const order = {
-      ...formData,
-      photoDownload: downloadLinkAddr,
-      referenceDownload: referenceFile?.downloadLink,
-      company: "아워웨딩",
-      division: formData.grade === "S 샘플" ? "샘플" : "신규",
-      step: "신규",
-    };
-
-    try {
-      const { data } = await axios.post(
-        `${API_URL}/order`, // ✅ 여기에 실제 API 엔드포인트 입력
-        order,
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      if (data.success) {
-        alert(`✅ 주문이 성공적으로 저장되었습니다! 주문 ID: ${data.orderId}`);
-      } else {
-        alert("❌ 주문 저장 실패");
-      }
-    } catch (error) {
-      console.error("❌ 오류 발생:", error);
-      alert("🚨 서버 오류");
-    }
-  };
-
-  const uploadFiles = async (fileList, userName, userId) => {
-    try {
-      const uploadPromises = fileList.map(async (file, index) => {
-        const formData = new FormData();
-
-        // 새로운 파일명 생성 (예: 원본 확장자 유지)
-        const originalName = file.originFileObj.name;
-        const fileExtension = originalName.substring(
-          originalName.lastIndexOf(".")
-        ); // 확장자 추출
-
-        // 새로운 파일명 생성 (index 추가, 한글 인코딩 적용)
-        const rawFileName = `아워웨딩_신규_${userName}_${userId}_${
-          index + 1
-        }${fileExtension}`;
-
-        const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
-
-        // 파일을 새로운 이름으로 추가
-        formData.append("file", file.originFileObj, newFileName);
-
-        const response = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error(`서버 응답 실패: ${response.status}`);
-        }
-
-        return response.json();
-      });
-
-      // 모든 파일 업로드 실행
-      const results = await Promise.all(uploadPromises);
-      console.log("📤 모든 파일 업로드 성공:", results);
-
-      return results;
-    } catch (error) {
-      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
-    }
-  };
-
-  const uploadReferenceFiles = async (fileList, userName, userId) => {
-    try {
-      if (fileList.length === 0) {
-        throw new Error("업로드할 파일이 없습니다.");
-      }
-
-      const formData = new FormData();
-
-      // ✅ 참고 사진의 원본 파일명 가져오기
-      const originalName = fileList[0].originFileObj.name;
-      const fileExtension = originalName.substring(
-        originalName.lastIndexOf(".")
-      ); // 확장자 추출
-
-      // ✅ 참고 사진의 원본 파일명 (확장자 제외)
-      const referenceName = "참고";
-
-      // ✅ 새로운 파일명 생성 (참고 사진 이름 적용)
-      const rawFileName = `아워웨딩_신규_${userName}_${userId}_${referenceName}${fileExtension}`;
-
-      const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
-
-      // ✅ 파일을 새로운 이름으로 추가
-      formData.append("file", fileList[0].originFileObj, newFileName);
-
-      // ✅ 파일 업로드 요청
-      const response = await fetch(`${API_URL}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`서버 응답 실패: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("📤 파일 업로드 성공:", result);
-
-      return result;
-    } catch (error) {
-      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
-    }
-  };
-
   // Effects
   useEffect(() => {
     const verifyToken = async () => {
@@ -394,17 +221,6 @@ function RevisionRequest() {
     };
     verifyToken();
   }, [navigation]);
-
-  // 유저 정보가 들어오면 formData 업데이트
-  useEffect(() => {
-    if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        userName: user.user_name || "",
-        userId: user.naver_id || "",
-      }));
-    }
-  }, [user]);
 
   return (
     <ConfigProvider
@@ -566,49 +382,102 @@ function RevisionRequest() {
                   />
                 </Form.Item>
 
-                <Form.Item label={<strong>{"진행상황"}</strong>} colon={false}>
+                <Form.Item
+                  label={<strong>{"진행상황"}</strong>}
+                  colon={false}
+                  help={
+                    order.grade === "S 샘플" ? (
+                      <div
+                        style={{
+                          whiteSpace: "pre-line",
+                          color: "rgba(147, 81, 23, 1)",
+                        }}
+                      >
+                        {`샘플은 보정 강도 체크를 위해 만든 상품임으로 웹에서만 확인 가능합니다.
+
+다운로드 희망 시 포토리뷰(★★★★★) 작성 후 톡톡으로 캡쳐 본 보내주시면 다운로드 가능하니 참고 부탁 드립니다!
+ ㄴ 리뷰작성시 꼭 구매확정을 눌러주셔야지 가능합니다!`}
+                      </div>
+                    ) : (
+                      ""
+                    )
+                  }
+                >
                   <Input variant="underlined" readOnly value={order.step} />
                 </Form.Item>
 
-                <Flex
-                  style={{
-                    alignSelf: "center",
-                    paddingBlock: "36px",
-                    width: "80%",
-                    flexDirection: screens.lg ? "row" : "column",
-                    gap: "20px",
-                  }}
-                >
-                  <Button
-                    style={{ width: "100%" }}
-                    type="primary"
-                    iconPosition="end"
-                    icon={<BsCaretRightFill />}
-                  >
-                    1차 보정본 다운로드
-                  </Button>
-                  <Button
-                    style={{ width: "100%" }}
-                    type="primary"
-                    iconPosition="end"
-                    icon={<BsCaretRightFill />}
-                  >
-                    최근 재수정본 다운로드
-                  </Button>
-                  <Button
-                    type="primary"
-                    iconPosition="end"
-                    icon={<BsCaretRightFill />}
+                {order.grade === "S 샘플" ? (
+                  <Flex
                     style={{
-                      backgroundColor: "rgba(69, 85, 43, 1)",
-                      color: "white",
-                      width: "100%",
+                      alignSelf: "center",
+                      paddingBlock: "36px",
+                      width: screens.lg ? "50%" : "100%",
+                      flexDirection: screens.lg ? "row" : "column",
+                      gap: "20px",
                     }}
-                    onClick={() => navigation("form", { state: { order } })}
                   >
-                    재수정 신청
-                  </Button>
-                </Flex>
+                    <Button
+                      style={{ width: "100%" }}
+                      type="primary"
+                      iconPosition="end"
+                      icon={<BsCaretRightFill />}
+                    >
+                      웹에서 미리보기
+                    </Button>
+                    <Button
+                      type="primary"
+                      iconPosition="end"
+                      icon={<BsCaretRightFill />}
+                      style={{
+                        backgroundColor: "rgba(69, 85, 43, 1)",
+                        color: "white",
+                        width: "100%",
+                      }}
+                    >
+                      샘플 다운로드
+                    </Button>
+                  </Flex>
+                ) : (
+                  <Flex
+                    style={{
+                      alignSelf: "center",
+                      paddingBlock: "36px",
+                      width: screens.lg ? "80%" : "100%",
+                      flexDirection: screens.lg ? "row" : "column",
+                      gap: "20px",
+                    }}
+                  >
+                    <Button
+                      style={{ width: "100%" }}
+                      type="primary"
+                      iconPosition="end"
+                      icon={<BsCaretRightFill />}
+                    >
+                      1차 보정본 다운로드
+                    </Button>
+                    <Button
+                      style={{ width: "100%" }}
+                      type="primary"
+                      iconPosition="end"
+                      icon={<BsCaretRightFill />}
+                    >
+                      최근 재수정본 다운로드
+                    </Button>
+                    <Button
+                      type="primary"
+                      iconPosition="end"
+                      icon={<BsCaretRightFill />}
+                      style={{
+                        backgroundColor: "rgba(69, 85, 43, 1)",
+                        color: "white",
+                        width: "100%",
+                      }}
+                      onClick={() => navigation("form", { state: { order } })}
+                    >
+                      재수정 신청
+                    </Button>
+                  </Flex>
+                )}
               </Flex>
             </Form>
 

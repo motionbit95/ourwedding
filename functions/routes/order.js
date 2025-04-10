@@ -18,8 +18,9 @@ class Order {
     photoDownload,
     referenceDownload,
     company,
+    division,
     step,
-    division
+    comment
   ) {
     this.userName = userName;
     this.userId = userId;
@@ -31,8 +32,9 @@ class Order {
     this.photoDownload = photoDownload;
     this.referenceDownload = referenceDownload;
     this.company = company;
-    this.step = step;
     this.division = division;
+    this.step = step;
+    this.comment = comment || "";
   }
 }
 
@@ -119,6 +121,7 @@ router.get("/user/:userId", async (req, res) => {
 
 // ✅ CREATE (주문 저장)
 router.post("/", async (req, res) => {
+  console.log(req.body);
   try {
     const newOrder = new Order(...Object.values(req.body));
     const orderRef = db.ref("orders").push();
@@ -148,6 +151,7 @@ router.get("/:orderId", async (req, res) => {
 
 // ✅ UPDATE (특정 주문 수정)
 router.put("/:orderId", async (req, res) => {
+  console.log(req.params.orderId);
   try {
     const orderId = req.params.orderId;
     await db.ref(`orders/${orderId}`).update(req.body);

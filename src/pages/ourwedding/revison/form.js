@@ -10,6 +10,7 @@ import {
   Modal,
   Select,
   Space,
+  Spin,
   Typography,
   Upload,
   message,
@@ -20,6 +21,18 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { MdAttachFile } from "react-icons/md";
 import { FiFilePlus } from "react-icons/fi";
 import { BsCaretRightFill } from "react-icons/bs";
+import { LoadingOutlined } from "@ant-design/icons";
+
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+
+import { storage } from "../../../firebaseConfig";
+import dayjs from "dayjs";
 
 const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
 
@@ -85,8 +98,12 @@ function RevisionForm() {
 
   const [order, setOrder] = useState({});
 
+  const [comment, setComment] = useState();
+  const [isLoading, setLoading] = useState();
+
   useEffect(() => {
     setOrder(location.state.order);
+    console.log(location.state.order);
   }, []);
 
   const customUpload = ({ file, onSuccess }) => {
@@ -201,9 +218,6 @@ function RevisionForm() {
     userName: user?.user_name || "",
     userId: user?.naver_id || "",
     receivedDate: formattedDate || "",
-    orderNumber: "",
-    grade: "",
-    photoCount: 0,
     additionalOptions: [],
   });
 
@@ -220,15 +234,32 @@ function RevisionForm() {
     setFormData((prev) => ({ ...prev, additionalOptions: checkedValues }));
   };
 
+  // 등급에서 기간 가져오기
+  const getDurationByGrade = (grade) => {
+    const found = GRADES.find(([g]) => g === grade);
+    return found?.[1];
+  };
+
+  // 기간으로 deadline 구하기
+  const getDeadline = (duration) => {
+    const now = dayjs();
+
+    if (!duration) return "알 수 없음";
+
+    if (duration.includes("일")) {
+      const days = parseInt(duration);
+      return now.add(days, "day").format("YYYY-MM-DD");
+    } else if (duration.includes("시간")) {
+      const hours = parseInt(duration);
+      return now.add(hours, "hour").format("YYYY-MM-DD HH:mm");
+    }
+    return "알 수 없음";
+  };
+
   const handleFormUpload = async () => {
+    setLoading(true);
     const file = await uploadFiles(
       photoList,
-      formData.userName,
-      formData.userId
-    );
-
-    const referenceFile = await uploadReferenceFiles(
-      referenceFileList,
       formData.userName,
       formData.userId
     );
@@ -236,127 +267,85 @@ function RevisionForm() {
     // ✅ downloadLink 값만 저장하는 배열 생성
     const downloadLinkAddr = file.map((f) => f.downloadLink);
 
-    console.log("다운로드", downloadLinkAddr);
+    const duration = getDurationByGrade(order.grade);
+    const deadline = getDeadline(duration);
 
-    console.log({
+    const order_ = {
       ...formData,
-      photoDownload: downloadLinkAddr,
-      referenceDownload: referenceFile?.downloadLink,
-    });
-
-    const order = {
-      ...formData,
-      photoDownload: downloadLinkAddr,
-      referenceDownload: referenceFile?.downloadLink,
+      orderNumber: order.orderNumber || "",
+      grade: order.grade,
+      photoCount: photoList.length,
+      revisionDownload: downloadLinkAddr,
       company: "아워웨딩",
-      division: formData.grade === "S 샘플" ? "샘플" : "신규",
-      step: "신규",
+      division: "재수정",
+      step: `재수정 작업중 (완료 예정일: ${deadline})`,
+      comment: comment,
     };
 
+    console.log(order_, order.id);
+
     try {
-      const { data } = await axios.post(
-        `${API_URL}/order`, // ✅ 여기에 실제 API 엔드포인트 입력
-        order,
+      const { data } = await axios.put(
+        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+        order_,
         {
           headers: { "Content-Type": "application/json" },
         }
       );
 
       if (data.success) {
-        alert(`✅ 주문이 성공적으로 저장되었습니다! 주문 ID: ${data.orderId}`);
+        alert(`✅ ${data.message}`);
       } else {
         alert("❌ 주문 저장 실패");
       }
+
+      setLoading(false);
     } catch (error) {
       console.error("❌ 오류 발생:", error);
       alert("🚨 서버 오류");
+      setLoading(false);
     }
   };
 
   const uploadFiles = async (fileList, userName, userId) => {
     try {
       const uploadPromises = fileList.map(async (file, index) => {
-        const formData = new FormData();
-
-        // 새로운 파일명 생성 (예: 원본 확장자 유지)
-        const originalName = file.originFileObj.name;
-        const fileExtension = originalName.substring(
-          originalName.lastIndexOf(".")
-        ); // 확장자 추출
-
-        // 새로운 파일명 생성 (index 추가, 한글 인코딩 적용)
+        const fileObj = file.originFileObj;
+        const fileExtension = fileObj.name.substring(
+          fileObj.name.lastIndexOf(".")
+        );
         const rawFileName = `아워웨딩_신규_${userName}_${userId}_${
           index + 1
         }${fileExtension}`;
+        const encodedFileName = encodeURIComponent(rawFileName);
 
-        const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
+        const storageRef = ref(storage, `temp/${encodedFileName}`);
 
-        // 파일을 새로운 이름으로 추가
-        formData.append("file", file.originFileObj, newFileName);
+        // 1. Firebase Storage에 업로드
+        await uploadBytes(storageRef, fileObj);
 
-        const response = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          body: formData,
+        // 2. 다운로드 URL 가져오기
+        const downloadURL = await getDownloadURL(storageRef);
+
+        // 3. 백엔드에 전송 (URL 방식)
+        const res = await axios.post(`${API_URL}/upload`, {
+          fileUrl: downloadURL,
+          originalFileName: encodedFileName,
         });
 
-        if (!response.ok) {
-          throw new Error(`서버 응답 실패: ${response.status}`);
-        }
+        // 4. 업로드 성공 시 Firebase Storage 파일 삭제
+        await deleteObject(storageRef);
+        console.log("📤 파일 업로드 및 삭제 성공:", res.data);
 
-        return response.json();
+        return res.data;
       });
 
-      // 모든 파일 업로드 실행
       const results = await Promise.all(uploadPromises);
-      console.log("📤 모든 파일 업로드 성공:", results);
-
+      console.log("📤 모든 파일 업로드 완료:", results);
       return results;
     } catch (error) {
-      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
-    }
-  };
-
-  const uploadReferenceFiles = async (fileList, userName, userId) => {
-    try {
-      if (fileList.length === 0) {
-        throw new Error("업로드할 파일이 없습니다.");
-      }
-
-      const formData = new FormData();
-
-      // ✅ 참고 사진의 원본 파일명 가져오기
-      const originalName = fileList[0].originFileObj.name;
-      const fileExtension = originalName.substring(
-        originalName.lastIndexOf(".")
-      ); // 확장자 추출
-
-      // ✅ 참고 사진의 원본 파일명 (확장자 제외)
-      const referenceName = "참고";
-
-      // ✅ 새로운 파일명 생성 (참고 사진 이름 적용)
-      const rawFileName = `아워웨딩_신규_${userName}_${userId}_${referenceName}${fileExtension}`;
-
-      const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
-
-      // ✅ 파일을 새로운 이름으로 추가
-      formData.append("file", fileList[0].originFileObj, newFileName);
-
-      // ✅ 파일 업로드 요청
-      const response = await fetch(`${API_URL}/upload`, {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`서버 응답 실패: ${response.status}`);
-      }
-
-      const result = await response.json();
-      console.log("📤 파일 업로드 성공:", result);
-
-      return result;
-    } catch (error) {
-      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
+      console.error("❌ 파일 업로드 실패:", error.message);
+      throw error;
     }
   };
 
@@ -422,6 +411,20 @@ function RevisionForm() {
       }}
     >
       {contextHolder}
+      <div
+        style={{
+          display: isLoading ? "flex" : "none",
+          position: "fixed",
+          zIndex: 99,
+          backgroundColor: "rgba(0, 0, 0, 0.3)",
+          width: "100%",
+          height: "100vh",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
+      </div>
       <Flex vertical style={{ alignItems: "center", justifyContent: "center" }}>
         <Flex
           vertical
@@ -623,71 +626,6 @@ function RevisionForm() {
               </Upload>
             </Space>
           </Flex>
-          <Flex vertical gap={"middle"}>
-            <Space>
-              <Typography.Title level={4} style={{ margin: "0 0 3px 0" }}>
-                참고 사진 업로드
-              </Typography.Title>
-              <MdAttachFile size={18} />
-            </Space>
-
-            <div
-              style={{
-                padding: paddingBox,
-                backgroundColor: "rgba(110, 133, 87, 0.2)",
-              }}
-            >
-              <Typography.Paragraph style={{ color: "rgba(85, 68, 30, 1)" }}>
-                <Flex vertical gap={"large"}>
-                  <li style={{ whiteSpace: "pre-line" }}>
-                    {`해당창은 참고사진을 업로드 하는 창으로 원하시는 작업 방향을 참고 할 수 있는 사진 업로드 부탁드립니다.
-  ex) 셀카 or 스튜디오 보정본`}
-                  </li>
-                  <li style={{ whiteSpace: "pre-line" }}>
-                    {`참고사진은 1장만 업로드 가능하여 최대한 [ 얼굴과 몸이 잘보이는 정면인 사진 ]  으로 업로드 바랍니다.`}
-                  </li>
-                </Flex>
-              </Typography.Paragraph>
-            </div>
-
-            <Space
-              size={"large"}
-              style={{
-                justifyContent: "flex-end",
-                marginBottom: "24px",
-              }}
-            >
-              <Upload
-                accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
-                maxCount={1}
-                showUploadList={false}
-                onChange={handleReferenceUpload}
-                customRequest={customUpload}
-                beforeUpload={(file) => {
-                  const isValidType = [
-                    ".raw",
-                    ".jpeg",
-                    ".jpg",
-                    ".cr2",
-                    ".cr3",
-                    ".heic",
-                  ].some((ext) => file.name.toLowerCase().endsWith(ext));
-                  if (!isValidType) {
-                    showMessage("error", "지원하지 않는 파일 형식입니다");
-                    return Upload.LIST_IGNORE;
-                  }
-                  return true;
-                }}
-              >
-                <Button
-                  type="primary"
-                  icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
-                >
-                  사진 업로드
-                </Button>
-              </Upload>
-            </Space>
-          </Flex>
 
           <Flex vertical gap={"middle"}>
             <Space>
@@ -711,20 +649,9 @@ function RevisionForm() {
                 title="요청사항 복사하기"
                 open={isModalOpen}
                 onOk={() => {
-                  const text = `1. 보정강도 (약,약중,중,중강,강)
-  (추천 : 자연스러운 보정을 위해 생각하시는 보정단계보다 한단계 낮춰서 진행 하시는걸 추천드립니다 ! )
-  
-  ▶️
-  
-  2. 전체 사진 공통 요청사항 
-  
-  신랑 :
-  신부 : 
-  
-  3. 개별 추가 요청사항
-  (밝기 조절은 기재 해주시면 가능합니다.) (색감작업은 아워웨딩 유료 필름 결제 해주셔야 합니다.)
-  
-  ▶️ 파일명 - 요청사항 :`;
+                  const text = `개별 추가 요청사항 (밝기 조절은 기재해주시면 가능합니다.) (색감 작업은 필름 결제 해주셔야 합니다.)
+                        
+▶️ 파일명 - 요청사항 :`;
                   navigator.clipboard.writeText(text);
                   showMessage(
                     "success",
@@ -757,22 +684,9 @@ function RevisionForm() {
                   >
                     <Flex vertical gap={"large"}>
                       <li style={{ whiteSpace: "pre-line" }}>
-                        {`1. 보정강도 (약,약중,중,중강,강)
-        (추천 : 자연스러운 보정을 위해 생각하시는 보정단계보다 한단계 낮춰서 진행 하시는걸 추천드립니다 ! )
-  
-        ▶️`}
-                      </li>
-                      <li style={{ whiteSpace: "pre-line" }}>
-                        {`2. 전체 사진 공통 요청사항 
-  
-  신랑 :
-  신부 : `}
-                      </li>
-                      <li style={{ whiteSpace: "pre-line" }}>
-                        {`3. 개별 추가 요청사항
-        (밝기 조절은 기재 해주시면 가능합니다.) (색감작업은 아워웨딩 유료 필름 결제 해주셔야 합니다.)
-  
-        ▶️ 파일명 - 요청사항 :`}
+                        {`개별 추가 요청사항 (밝기 조절은 기재해주시면 가능합니다.) (색감 작업은 필름 결제 해주셔야 합니다.)
+                        
+▶️ 파일명 - 요청사항 :`}
                       </li>
                     </Flex>
                   </Typography.Paragraph>
@@ -816,6 +730,15 @@ function RevisionForm() {
                 </Flex>
               </Typography.Paragraph>
             </div>
+
+            <Input.TextArea
+              rows={10}
+              autoSize={true}
+              onChange={(e) => setComment(e.target.value)}
+              defaultValue={`개별 추가 요청사항 (밝기 조절은 기재해주시면 가능합니다.) (색감 작업은 필름 결제 해주셔야 합니다.)
+                        
+▶️ 파일명 - 요청사항 :`}
+            />
           </Flex>
         </Flex>
       </Flex>
