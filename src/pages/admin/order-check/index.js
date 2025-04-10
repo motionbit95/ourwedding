@@ -138,7 +138,7 @@ function OrderPage() {
             style={{
               width: 20,
               height: 20,
-              backgroundColor: "rgba(242, 229, 203, 1)",
+              backgroundColor: "rgba(248, 236, 236, 1) ",
             }}
           />
           <div>재수정</div>

@@ -11,6 +11,8 @@ import {
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import OrderPage from "./order-check";
 import NewOrder from "./new-order";
+import ReOrder from "./re-order";
+import PreWork from "./pre-work";
 
 const { Header, Content, Sider } = Layout;
 
@@ -18,14 +20,11 @@ const { Header, Content, Sider } = Layout;
 const menuItems = [
   { key: "order-check", label: "주문확인" },
   { key: "new-order", label: "신규" },
-  { key: "recalibration", label: "재보정" },
-  { key: "prework", label: "선작업" },
+  { key: "re-order", label: "재수정" },
+  { key: "pre-work", label: "선작업" },
   { key: "worker-status", label: "작업자현황" },
   { key: "file-transfer", label: "파일전송" },
 ];
-
-// 각 페이지 컴포넌트
-const SettingsPage = () => <div>⚙️ Settings Content</div>;
 
 // 사이드바 메뉴 컴포넌트
 const SidebarMenu = () => {
@@ -126,7 +125,8 @@ const Dashboard = () => {
               <Route path="/" element={<OrderPage />} />
               <Route path="order-check" element={<OrderPage />} />
               <Route path="new-order" element={<NewOrder />} />
-              <Route path="settings" element={<SettingsPage />} />
+              <Route path="re-order" element={<ReOrder />} />
+              <Route path="pre-work" element={<PreWork />} />
             </Routes>
           </Content>
         </Layout>

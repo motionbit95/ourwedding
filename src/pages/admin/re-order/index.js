@@ -20,29 +20,13 @@ const ADDITIONAL_OPTION_MAP = {
   edit: "합성",
 };
 
-const handleDownloadZip = async (record) => {
-  try {
-    const response = await axios.post(
-      `${API_URL}/download-zip`,
-      {
-        photoDownload: record.photoDownload,
-        referenceDownload: record.referenceDownload,
-      },
-      { responseType: "blob" }
-    );
-
-    const blob = new Blob([response.data], { type: "application/zip" });
-    const filename = `${record.userName}_${record.orderNumber}.zip`;
-    saveAs(blob, filename);
-  } catch (error) {
-    console.error("ZIP 다운로드 실패:", error);
-  }
-};
-
-function NewOrder() {
+function ReOrder() {
   const [alignValue, setAlignValue] = React.useState("전체");
   const [dayValue, setDayValue] = React.useState("전체");
   const [orders, setOrders] = React.useState([]);
+
+  const [isLoading, setLoading] = useState();
+  const [selectOrder, setSelectOrder] = useState();
 
   const [photoList, setPhotoList] = useState();
 
@@ -62,13 +46,10 @@ function NewOrder() {
   };
 
   const handlePhotoUpload = async ({ file, fileList }, order) => {
+    setLoading({ isLoading: true, type: "재수정" });
     if (!order) return;
+    setSelectOrder(order);
     if (file.status === "done") {
-      showMessage(
-        "success",
-        `${file.name} 사진이 성공적으로 업로드되었습니다.`
-      );
-
       console.log("order :", order);
 
       const file_ = await uploadFiles(fileList, order.userName, order.userId);
@@ -79,8 +60,8 @@ function NewOrder() {
       const order_ = {
         ...order,
         photoCount: photoList.length,
-        preDownload: downloadLinkAddr,
-        division: "선작업",
+        reWorkDownload: downloadLinkAddr,
+        division: "재수정완료",
       };
 
       const { data } = await axios.put(
@@ -92,8 +73,19 @@ function NewOrder() {
       );
 
       console.log(data);
+      setLoading({ isLoading: false, type: "1차보정" });
+      showMessage(
+        "success",
+        `${file.name} 사진이 성공적으로 업로드되었습니다.`
+      );
+
+      // 약간의 딜레이 후 새로고침 (사용자에게 메시지가 보이도록)
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } else if (file.status === "error") {
       showMessage("error", `${file.name} 사진 업로드에 실패했습니다.`);
+      setLoading({ isLoading: false, type: "재수정" });
     }
     setPhotoList(fileList);
   };
@@ -140,10 +132,71 @@ function NewOrder() {
     }
   };
 
+  const handleDownloadZipOrigin = async (record) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/download-zip`,
+        {
+          photoDownload: record.photoDownload,
+          referenceDownload: record.referenceDownload,
+        },
+        { responseType: "blob" }
+      );
+
+      const blob = new Blob([response.data], { type: "application/zip" });
+      const filename = `${record.userName}_${record.orderNumber}_원본.zip`;
+      saveAs(blob, filename);
+    } catch (error) {
+      console.error("ZIP 다운로드 실패:", error);
+    }
+  };
+
+  const handleDownloadZipPre = async (record) => {
+    setLoading({ isLoading: true, type: "선작업" });
+    setSelectOrder(record);
+    try {
+      const response = await axios.post(
+        `${API_URL}/download-zip`,
+        {
+          photoDownload: record.preDownload,
+        },
+        { responseType: "blob" }
+      );
+
+      const blob = new Blob([response.data], { type: "application/zip" });
+      const filename = `${record.userName}_${record.orderNumber}_선작업.zip`;
+      saveAs(blob, filename);
+    } catch (error) {
+      console.error("ZIP 다운로드 실패:", error);
+    }
+    setLoading({ isLoading: false, type: "선작업" });
+  };
+
+  const handleDownloadZipFirstWork = async (record) => {
+    setLoading({ isLoading: true, type: "1차보정" });
+    setSelectOrder(record);
+    try {
+      const response = await axios.post(
+        `${API_URL}/download-zip`,
+        {
+          photoDownload: record.firstWorkDownload,
+        },
+        { responseType: "blob" }
+      );
+
+      const blob = new Blob([response.data], { type: "application/zip" });
+      const filename = `${record.userName}_${record.orderNumber}_1차보정.zip`;
+      saveAs(blob, filename);
+    } catch (error) {
+      console.error("ZIP 다운로드 실패:", error);
+    }
+    setLoading({ isLoading: false, type: "1차보정" });
+  };
+
   const getOrders = async (company, day) => {
     try {
       const response = await axios.get(`${API_URL}/order/filter`, {
-        params: { company, day, step: ["신규", "샘플"] },
+        params: { company, day, step: "재수정" },
       });
 
       const data = response.data.orders;
@@ -199,24 +252,27 @@ function NewOrder() {
       align: "center",
     },
     {
-      title: "등급",
-      dataIndex: "grade",
-      key: "grade",
+      title: "작업자",
       align: "center",
+      className: "highlight-header",
     },
     {
-      title: "장수(추가결제 여부 및 종류)",
+      title: "장수(신규/재수정)(추가결제)",
       key: "photoInfo",
       align: "center",
+      className: "highlight-header",
       render: (_, record) => {
-        const count = record.photoDownload.length || "0";
+        const photoCount = record.photoDownload.length || "0";
+        const revisionCount = record.revisionDownload.length || "0";
         const options = Array.isArray(record.additionalOptions)
           ? record.additionalOptions
               .map((opt) => ADDITIONAL_OPTION_MAP[opt] || opt)
               .join(", ")
           : "";
 
-        return options ? `${count}장 (${options})` : `${count}장`;
+        return options
+          ? `${photoCount} / ${revisionCount} (${options})`
+          : `${photoCount} / ${revisionCount}`;
       },
     },
     {
@@ -240,15 +296,54 @@ function NewOrder() {
     {
       title: "원본",
       align: "center",
-      className: "highlight-header",
       render: (_, record) => (
-        <Button onClick={() => handleDownloadZip(record)}>다운로드</Button>
+        <Button
+          onClick={() => handleDownloadZipOrigin(record)}
+          loading={
+            record?.id === selectOrder?.id &&
+            isLoading.isLoading &&
+            isLoading.type === "원본"
+          }
+        >
+          다운로드
+        </Button>
       ),
     },
     {
       title: "선작업본",
       align: "center",
-      className: "highlight-header",
+      render: (_, record) => (
+        <Button
+          onClick={() => handleDownloadZipPre(record)}
+          loading={
+            record?.id === selectOrder?.id &&
+            isLoading.isLoading &&
+            isLoading.type === "선작업"
+          }
+        >
+          다운로드
+        </Button>
+      ),
+    },
+    {
+      title: "1차보정본",
+      align: "center",
+      render: (_, record) => (
+        <Button
+          onClick={() => handleDownloadZipFirstWork(record)}
+          loading={
+            record?.id === selectOrder?.id &&
+            isLoading.isLoading &&
+            isLoading.type === "1차보정"
+          }
+        >
+          다운로드
+        </Button>
+      ),
+    },
+    {
+      title: "재수정본",
+      align: "center",
       render: (_, record) => (
         <Upload
           accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
@@ -273,7 +368,15 @@ function NewOrder() {
             return true;
           }}
         >
-          <Button>업로드</Button>
+          <Button
+            loading={
+              record?.id === selectOrder?.id &&
+              isLoading.isLoading &&
+              isLoading.type === "재수정"
+            }
+          >
+            업로드
+          </Button>
         </Upload>
       ),
     },
@@ -366,4 +469,4 @@ function NewOrder() {
   );
 }
 
-export default NewOrder;
+export default ReOrder;

@@ -51,6 +51,7 @@ const GRADE_WORK_DAYS = {
 router.get("/filter", async (req, res) => {
   const { company = "전체", day = "전체", step = "전체" } = req.query;
 
+  console.log(req.query);
   try {
     const db = admin.database();
     const snapshot = await db.ref("orders").once("value");
@@ -65,7 +66,7 @@ router.get("/filter", async (req, res) => {
       .filter(([id, order]) => {
         const orderCompany = order.company;
         const orderGrade = order.grade;
-        const orderStep = order.step;
+        const orderStep = order.division;
         const receivedDate = dayjs(order.receivedDate);
         const workDays = GRADE_WORK_DAYS[orderGrade];
 

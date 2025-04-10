@@ -79,9 +79,6 @@ const CAUTION_ITEMS = [
       </>
     ),
   },
-  {
-    text: "샘플 진행 시 사진은 자사 작업물로 귀속되어 마케팅 채널에 활용될 수 있습니다. ( 모자이크 X )",
-  },
 ];
 
 function RevisionForm() {
@@ -314,7 +311,7 @@ function RevisionForm() {
         const fileExtension = fileObj.name.substring(
           fileObj.name.lastIndexOf(".")
         );
-        const rawFileName = `아워웨딩_신규_${userName}_${userId}_${
+        const rawFileName = `아워웨딩_재수정_${userName}_${userId}_${
           index + 1
         }${fileExtension}`;
         const encodedFileName = encodeURIComponent(rawFileName);
@@ -549,29 +546,22 @@ function RevisionForm() {
               <Typography.Paragraph style={{ color: "rgba(85, 68, 30, 1)" }}>
                 <Flex vertical gap={"large"}>
                   <li style={{ whiteSpace: "pre-line" }}>
-                    {`파일 업로드는 raw / jpeg / jpg / cr2 / cr3 / heic만 가능합니다.
-                       ㄴ 그 이외에 파일은 해당 사이트에서 파일 변환하여 업로드바랍니다. `}
-                    <Typography.Link
-                      style={{
-                        color: "rgba(204, 87, 58, 1)",
-                        fontWeight: 700,
-                      }}
-                      onClick={() => window.open("https://convertio.co/kr/")}
-                    >
-                      Convertio — 파일 변환기
-                    </Typography.Link>
-                    {" : 파일전환 페이지"}
+                    {`사진은 업로드 후 변경이 불가능하니 신중하게 업로드 부탁 드립니다.`}
                   </li>
 
                   <li style={{ whiteSpace: "pre-line" }}>
-                    {
-                      "사진은 업로드 후 변경이 불가능하니 신중하게 업로드 부탁 드립니다."
-                    }
+                    {`공정한 재수정 접수를 위해 1건의 주문 당 1건의 재수정 접수만 받고 있습니다. 
+      그러므로 재수정 요청 시 한번에 정리하여 접수 바랍니다.`}
                   </li>
 
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`파일용량은 꼭 확인 후 가장 큰 파일로 업로드 부탁 드립니다.
-                       ㄴ 작업 이후 파일 크기로 인한 재작업은 재주문 후 진행해야 합니다.`}
+      휴대폰(카톡)으로 이동 시 파일 크기가 작아지는 경우가 있으니, 꼭 파일 크기 확인 부탁드립니다.`}
+                  </li>
+                  <li style={{ whiteSpace: "pre-line" }}>
+                    {`원본 재작업은 불가합니다. 그러므로 보정강도를 줄이거나 복구가 필요한 부분이 있을 시 원본을 참고해야 하기에
+      [원본+보정본]을 함께 첨부 부탁 드립니다. 
+      ㄴ 재수정 위치를 표시한 사진을 전달시에는 [표시 사진 + 보정본] 보내주셔야 합니다.`}
                   </li>
                 </Flex>
               </Typography.Paragraph>
@@ -705,10 +695,6 @@ function RevisionForm() {
                     {`상단 [요청사항] 클릭 시 작성해야 될 텍스트가 복사되니, 텍스트를 기반으로 요청사항 작성해주세요.`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
-                    {`상세페이지 기본수정사항에 있는 부분은 자동으로 적용되는 사항들이니
-                       요청사항 기재 시 기본수정사항 제외한 후 추가적으로 원하시는 부분을 기재 해주세요.`}
-                  </li>
-                  <li style={{ whiteSpace: "pre-line" }}>
                     {`요청사항 기재 시 좌우에 대한 기준은 모니터를 바라봤을때의 기준입니다. (모니터 속 인물 기준 X)`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
@@ -719,10 +705,13 @@ function RevisionForm() {
          착해보이게  (X)    ➡️    왼쪽 입꼬리를 올려주세요.       (O)`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
-                    {`(2인 기준) 전체  요청사항(10가지) / 개별 요청사항(5가지) 초과 시 추가금 있습니다.`}
+                    {`요청사항(5가지) 초과 시 추가금 있습니다.`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`밝기 부분은 요청사항 기재 시 적용 가능합니다. 다만 색감 요청 시에는 필름 결제 후 요청 가능합니다.`}
+                  </li>
+                  <li style={{ whiteSpace: "pre-line" }}>
+                    {`보정강도를 줄이거나 복구가 필요한 부분이 있을 시 꼭 [원본 + 보정본]을 함께 첨부 부탁드립니다.`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`접수 이후 요청사항 추가는 불가능하니, 빠진 부분이 없는지 재차 확인 부탁 드립니다.`}
