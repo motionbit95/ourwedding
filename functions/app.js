@@ -35,9 +35,11 @@ app.use("/auth", authRoutes);
 app.use("/order", orderRoutes);
 app.use("/", require("./routes/downloader"));
 
-const { uploadFile, upload } = require("./routes/uploader");
+const { uploadByUrlHandler } = require("./routes/uploader");
 
-app.post("/upload", upload.single("file"), uploadFile); // multer 미들웨어 사용
+// app.post("/upload", upload.single("file"), uploadFile); // multer 미들웨어 사용
+// 실제 엔드포인트
+app.post("/upload", uploadByUrlHandler);
 
 const PORT = process.env.PORT || 8080;
 

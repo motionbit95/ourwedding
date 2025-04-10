@@ -20,6 +20,15 @@ import { useNavigate } from "react-router-dom";
 import { MdAttachFile } from "react-icons/md";
 import { FiFilePlus } from "react-icons/fi";
 import { BsCaretRightFill } from "react-icons/bs";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
+
+import { storage } from "../../../firebaseConfig";
 
 const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
 
@@ -81,6 +90,39 @@ function NewRequest() {
 
   const [photoList, setPhotoList] = useState([]); // 사진 리스트
   const [referenceFileList, setReferenceFileList] = useState([]); // 레퍼런스 파일 리스트
+
+  const [testFile, setTestFile] = useState();
+
+  const updateFile = async (e) => {
+    try {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const storage = getStorage();
+      const customName = `아워웨딩_신규_박수정_krystal_테스트.jpg`;
+      const fileRef = ref(storage, `temp/${customName}`);
+
+      // 1. Firebase Storage에 업로드
+      await uploadBytes(fileRef, file);
+
+      // 2. 다운로드 URL 가져오기
+      const fileUrl = await getDownloadURL(fileRef);
+
+      // 3. 백엔드에 전송 (URL 방식)
+      const res = await axios.post(`${API_URL}/upload`, {
+        fileUrl,
+        originalFileName: encodeURIComponent(customName),
+      });
+
+      console.log("📤 Google Drive 업로드 성공:", res.data);
+
+      // 4. Firebase Storage에서 삭제
+      await deleteObject(fileRef);
+      console.log("🗑️ Firebase Storage에서 삭제 완료");
+    } catch (error) {
+      console.error("❌ 파일 업로드 실패:", error);
+    }
+  };
 
   const customUpload = ({ file, onSuccess }) => {
     onSuccess("ok"); // 강제로 성공 처리
@@ -269,43 +311,42 @@ function NewRequest() {
   const uploadFiles = async (fileList, userName, userId) => {
     try {
       const uploadPromises = fileList.map(async (file, index) => {
-        const formData = new FormData();
-
-        // 새로운 파일명 생성 (예: 원본 확장자 유지)
-        const originalName = file.originFileObj.name;
-        const fileExtension = originalName.substring(
-          originalName.lastIndexOf(".")
-        ); // 확장자 추출
-
-        // 새로운 파일명 생성 (index 추가, 한글 인코딩 적용)
+        const fileObj = file.originFileObj;
+        const fileExtension = fileObj.name.substring(
+          fileObj.name.lastIndexOf(".")
+        );
         const rawFileName = `아워웨딩_신규_${userName}_${userId}_${
           index + 1
         }${fileExtension}`;
+        const encodedFileName = encodeURIComponent(rawFileName);
 
-        const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
+        const storageRef = ref(storage, `temp/${encodedFileName}`);
 
-        // 파일을 새로운 이름으로 추가
-        formData.append("file", file.originFileObj, newFileName);
+        // 1. Firebase Storage에 업로드
+        await uploadBytes(storageRef, fileObj);
 
-        const response = await fetch(`${API_URL}/upload`, {
-          method: "POST",
-          body: formData,
+        // 2. 다운로드 URL 가져오기
+        const downloadURL = await getDownloadURL(storageRef);
+
+        // 3. 백엔드에 전송 (URL 방식)
+        const res = await axios.post(`${API_URL}/upload`, {
+          fileUrl: downloadURL,
+          originalFileName: encodedFileName,
         });
 
-        if (!response.ok) {
-          throw new Error(`서버 응답 실패: ${response.status}`);
-        }
+        // 4. 업로드 성공 시 Firebase Storage 파일 삭제
+        await deleteObject(storageRef);
+        console.log("📤 파일 업로드 및 삭제 성공:", res.data);
 
-        return response.json();
+        return res.data;
       });
 
-      // 모든 파일 업로드 실행
       const results = await Promise.all(uploadPromises);
-      console.log("📤 모든 파일 업로드 성공:", results);
-
+      console.log("📤 모든 파일 업로드 완료:", results);
       return results;
     } catch (error) {
-      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
+      console.error("❌ 파일 업로드 실패:", error.message);
+      throw error;
     }
   };
 
@@ -315,41 +356,35 @@ function NewRequest() {
         throw new Error("업로드할 파일이 없습니다.");
       }
 
-      const formData = new FormData();
+      const fileObj = fileList[0].originFileObj;
+      const fileExtension = fileObj.name.substring(
+        fileObj.name.lastIndexOf(".")
+      );
+      const rawFileName = `아워웨딩_신규_${userName}_${userId}_참고${fileExtension}`;
+      const encodedFileName = encodeURIComponent(rawFileName);
 
-      // ✅ 참고 사진의 원본 파일명 가져오기
-      const originalName = fileList[0].originFileObj.name;
-      const fileExtension = originalName.substring(
-        originalName.lastIndexOf(".")
-      ); // 확장자 추출
+      const storageRef = ref(storage, `temp/${encodedFileName}`);
 
-      // ✅ 참고 사진의 원본 파일명 (확장자 제외)
-      const referenceName = "참고";
+      // 1. Firebase Storage에 업로드
+      await uploadBytes(storageRef, fileObj);
 
-      // ✅ 새로운 파일명 생성 (참고 사진 이름 적용)
-      const rawFileName = `아워웨딩_신규_${userName}_${userId}_${referenceName}${fileExtension}`;
+      // 2. 다운로드 URL 가져오기
+      const downloadURL = await getDownloadURL(storageRef);
 
-      const newFileName = encodeURIComponent(rawFileName); // 한글 인코딩
-
-      // ✅ 파일을 새로운 이름으로 추가
-      formData.append("file", fileList[0].originFileObj, newFileName);
-
-      // ✅ 파일 업로드 요청
-      const response = await fetch(`${API_URL}/upload`, {
-        method: "POST",
-        body: formData,
+      // 3. 백엔드에 전송 (URL 방식)
+      const res = await axios.post(`${API_URL}/upload`, {
+        fileUrl: downloadURL,
+        originalFileName: encodedFileName,
       });
 
-      if (!response.ok) {
-        throw new Error(`서버 응답 실패: ${response.status}`);
-      }
+      // 4. 업로드 성공 시 Firebase Storage 파일 삭제
+      await deleteObject(storageRef);
+      console.log("📤 참고 파일 업로드 및 삭제 성공:", res.data);
 
-      const result = await response.json();
-      console.log("📤 파일 업로드 성공:", result);
-
-      return result;
+      return res.data;
     } catch (error) {
-      console.error("❌ 파일 업로드 중 오류 발생:", error.message);
+      console.error("❌ 참고 파일 업로드 실패:", error.message);
+      throw error;
     }
   };
 
@@ -438,6 +473,7 @@ function NewRequest() {
             }}
           />
         </Flex>
+        <Input type="file" onChange={updateFile} />
         <Form
           labelCol={{ span: 8 }}
           wrapperCol={{ span: 16 }}
