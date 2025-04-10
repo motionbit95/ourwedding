@@ -13,6 +13,7 @@ import OrderPage from "./order-check";
 import NewOrder from "./new-order";
 import ReOrder from "./re-order";
 import PreWork from "./pre-work";
+import FileSend from "./file-send";
 
 const { Header, Content, Sider } = Layout;
 
@@ -23,7 +24,7 @@ const menuItems = [
   { key: "re-order", label: "재수정" },
   { key: "pre-work", label: "선작업" },
   { key: "worker-status", label: "작업자현황" },
-  { key: "file-transfer", label: "파일전송" },
+  { key: "file-send", label: "파일전송" },
 ];
 
 // 사이드바 메뉴 컴포넌트
@@ -127,6 +128,7 @@ const Dashboard = () => {
               <Route path="new-order" element={<NewOrder />} />
               <Route path="re-order" element={<ReOrder />} />
               <Route path="pre-work" element={<PreWork />} />
+              <Route path="file-send" element={<FileSend />} />
             </Routes>
           </Content>
         </Layout>

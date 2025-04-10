@@ -1,6 +1,7 @@
 import { Button, Flex, message, Segmented, Space, Table, Upload } from "antd";
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
+import qs from "qs";
 
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -80,7 +81,7 @@ function NewOrder() {
         ...order,
         photoCount: photoList.length,
         preDownload: downloadLinkAddr,
-        division: "선작업",
+        division: order.grade === "S 샘플" ? "샘플완료" : "선작업",
       };
 
       const { data } = await axios.put(
@@ -144,6 +145,8 @@ function NewOrder() {
     try {
       const response = await axios.get(`${API_URL}/order/filter`, {
         params: { company, day, step: ["신규", "샘플"] },
+        paramsSerializer: (params) =>
+          qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
       });
 
       const data = response.data.orders;
@@ -335,9 +338,9 @@ function NewOrder() {
           pagination={{ pageSize: 10 }}
           rowClassName={
             (record) =>
-              record.division === "샘플"
+              record.label === "샘플"
                 ? "sample-row"
-                : record.division === "신규"
+                : record.label === "신규"
                 ? "new-row "
                 : "revision-row " // 재수정
           }

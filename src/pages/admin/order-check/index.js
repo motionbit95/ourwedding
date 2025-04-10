@@ -1,6 +1,7 @@
 import { Button, Flex, Segmented, Space, Table } from "antd";
 import axios from "axios";
 import React, { useEffect } from "react";
+import qs from "qs";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -18,7 +19,9 @@ function OrderPage() {
   const getOrders = async (company, day) => {
     try {
       const response = await axios.get(`${API_URL}/order/filter`, {
-        params: { company, day },
+        params: { company, day, step: ["신규", "샘플"] },
+        paramsSerializer: (params) =>
+          qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
       });
 
       const data = response.data.orders;
@@ -162,9 +165,9 @@ function OrderPage() {
           pagination={{ pageSize: 10 }}
           rowClassName={
             (record) =>
-              record.division === "샘플"
+              record.label === "샘플"
                 ? "sample-row"
-                : record.division === "신규"
+                : record.label === "신규"
                 ? "new-row "
                 : "revision-row " // 재수정
           }

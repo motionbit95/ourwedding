@@ -313,6 +313,7 @@ function NewRequest() {
           ? `샘플 작업중 (완료 예정일: ${deadline})`
           : `1차 보정본 작업중 (완료 예정일: ${deadline})`,
       comment: comment,
+      label: formData.grade === "S 샘플" ? "샘플" : "신규",
     };
 
     console.log(order);

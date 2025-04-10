@@ -20,7 +20,8 @@ class Order {
     company,
     division,
     step,
-    comment
+    comment,
+    label
   ) {
     this.userName = userName;
     this.userId = userId;
@@ -35,6 +36,7 @@ class Order {
     this.division = division;
     this.step = step;
     this.comment = comment || "";
+    this.label = label;
   }
 }
 
@@ -51,7 +53,6 @@ const GRADE_WORK_DAYS = {
 router.get("/filter", async (req, res) => {
   const { company = "전체", day = "전체", step = "전체" } = req.query;
 
-  console.log(req.query);
   try {
     const db = admin.database();
     const snapshot = await db.ref("orders").once("value");
@@ -60,7 +61,20 @@ router.get("/filter", async (req, res) => {
     const now = dayjs();
     const dayLimit = day === "전체" ? null : parseInt(day);
 
-    const allowedSteps = ["샘플", "신규", "재수정"];
+    const allowedSteps = [
+      "샘플",
+      "신규",
+      "재수정",
+      "1차보정완료",
+      "재수정완료",
+    ];
+
+    const queryStep = step;
+    const stepList = Array.isArray(queryStep)
+      ? queryStep
+      : queryStep === "전체" || !queryStep
+      ? allowedSteps
+      : [queryStep];
 
     const filteredOrders = Object.entries(orders || {})
       .filter(([id, order]) => {
@@ -80,10 +94,9 @@ router.get("/filter", async (req, res) => {
           dayLimit === null ||
           (remainingDays >= 0 && remainingDays <= dayLimit);
 
-        const matchesStep =
-          step === "전체"
-            ? allowedSteps.includes(orderStep) // 전체일 경우 허용된 step만 필터
-            : orderStep === step;
+        const matchesStep = stepList.some((s) =>
+          Array.isArray(orderStep) ? orderStep.includes(s) : orderStep === s
+        );
 
         return matchesCompany && matchesDay && matchesStep;
       })
@@ -91,6 +104,8 @@ router.get("/filter", async (req, res) => {
         id,
         ...order,
       }));
+
+    console.log(filteredOrders);
 
     res.json({ orders: filteredOrders });
   } catch (error) {

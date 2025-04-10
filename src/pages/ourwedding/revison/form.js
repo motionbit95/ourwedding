@@ -277,6 +277,7 @@ function RevisionForm() {
       division: "재수정",
       step: `재수정 작업중 (완료 예정일: ${deadline})`,
       comment: comment,
+      label: "재수정",
     };
 
     console.log(order_, order.id);

@@ -1,6 +1,16 @@
-import { Button, Flex, message, Segmented, Space, Table, Upload } from "antd";
+import {
+  Button,
+  Col,
+  Flex,
+  message,
+  Segmented,
+  Space,
+  Table,
+  Upload,
+} from "antd";
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
+import qs from "qs";
 
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -20,7 +30,7 @@ const ADDITIONAL_OPTION_MAP = {
   edit: "합성",
 };
 
-function ReOrder() {
+function FileSend() {
   const [alignValue, setAlignValue] = React.useState("전체");
   const [dayValue, setDayValue] = React.useState("전체");
   const [orders, setOrders] = React.useState([]);
@@ -196,7 +206,13 @@ function ReOrder() {
   const getOrders = async (company, day) => {
     try {
       const response = await axios.get(`${API_URL}/order/filter`, {
-        params: { company, day, step: "재수정" },
+        params: {
+          company,
+          day,
+          step: ["1차보정완료", "재수정완료", "샘플완료"],
+        },
+        paramsSerializer: (params) =>
+          qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
       });
 
       const data = response.data.orders;
@@ -221,6 +237,15 @@ function ReOrder() {
   }, [alignValue, dayValue]);
 
   const columns = [
+    {
+      title: "전송여부",
+      dataIndex: "send",
+      key: "send",
+      align: "center",
+      render: (_, record) => {
+        return record.send ? "O" : "X";
+      },
+    },
     {
       title: "업체",
       dataIndex: "company",
@@ -251,47 +276,22 @@ function ReOrder() {
       key: "receivedDate",
       align: "center",
     },
-    {
-      title: "작업자",
-      align: "center",
-      className: "highlight-header",
-    },
+
     {
       title: "장수(신규/재수정)(추가결제)",
       key: "photoInfo",
       align: "center",
-      className: "highlight-header",
       render: (_, record) => {
-        const photoCount = record.photoDownload.length || "0";
-        const revisionCount = record.revisionDownload.length || "0";
+        const photoCount = record.photoDownload?.length || "0";
+        const revisionCount = record.revisionDownload?.length || "0";
         const options = Array.isArray(record.additionalOptions)
           ? record.additionalOptions
               .map((opt) => ADDITIONAL_OPTION_MAP[opt] || opt)
               .join(", ")
           : "";
 
-        return options
-          ? `${photoCount} / ${revisionCount} (${options})`
-          : `${photoCount} / ${revisionCount}`;
+        return options ? `${photoCount}장 (${options})` : `${photoCount}장`;
       },
-    },
-    {
-      title: "요청사항",
-      align: "center",
-      render: (_, record) => (
-        <div
-          style={{
-            justifySelf: "center",
-            borderRadius: "100px",
-            width: 20,
-            height: 20,
-            padding: 0,
-            margin: 0,
-            border: "none",
-            backgroundColor: "rgba(255, 217, 93, 1)",
-          }}
-        />
-      ),
     },
     {
       title: "원본",
@@ -326,19 +326,32 @@ function ReOrder() {
       ),
     },
     {
+      title: "뷰탭",
+      align: "center",
+      render: (_, record) => <Button>뷰탭</Button>,
+    },
+    {
       title: "1차보정본",
       align: "center",
       render: (_, record) => (
-        <Button
-          onClick={() => handleDownloadZipFirstWork(record)}
-          loading={
-            record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
-            isLoading.type === "1차보정"
-          }
-        >
-          다운로드
-        </Button>
+        <>
+          {record.division === "1차보정완료" && (
+            <Flex vertical gap={"small"}>
+              <Button
+                onClick={() => handleDownloadZipFirstWork(record)}
+                loading={
+                  record?.id === selectOrder?.id &&
+                  isLoading.isLoading &&
+                  isLoading.type === "1차보정"
+                }
+              >
+                다운로드
+              </Button>
+
+              <Button>업로드</Button>
+            </Flex>
+          )}
+        </>
       ),
     },
     {
@@ -368,17 +381,70 @@ function ReOrder() {
             return true;
           }}
         >
-          <Button
-            loading={
-              record?.id === selectOrder?.id &&
-              isLoading.isLoading &&
-              isLoading.type === "재수정"
-            }
-          >
-            업로드
-          </Button>
+          <>
+            {record.division === "재수정완료" && (
+              <Flex vertical gap={"small"}>
+                <Button
+                  onClick={() => handleDownloadZipFirstWork(record)}
+                  loading={
+                    record?.id === selectOrder?.id &&
+                    isLoading.isLoading &&
+                    isLoading.type === "재수정"
+                  }
+                >
+                  다운로드
+                </Button>
+
+                <Button>업로드</Button>
+              </Flex>
+            )}
+          </>
         </Upload>
       ),
+    },
+    {
+      title: "샘플",
+      align: "center",
+      render: (_, record) => (
+        <Upload
+          accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
+          multiple
+          onChange={(info) => handlePhotoUpload(info, record)} // order를 인자로 넘김
+          fileList={photoList}
+          showUploadList={false}
+          customRequest={customUpload}
+          beforeUpload={(file) => {
+            const isValidType = [
+              ".raw",
+              ".jpeg",
+              ".jpg",
+              ".cr2",
+              ".cr3",
+              ".heic",
+            ].some((ext) => file.name.toLowerCase().endsWith(ext));
+            if (!isValidType) {
+              showMessage("error", "지원하지 않는 파일 형식입니다");
+              return Upload.LIST_IGNORE;
+            }
+            return true;
+          }}
+        >
+          <>
+            {record.division === "샘플완료" && (
+              <Flex vertical gap={"small"}>
+                <Button>워터마크 O</Button>
+
+                <Button>워터마크 X</Button>
+              </Flex>
+            )}
+          </>
+        </Upload>
+      ),
+    },
+    {
+      title: "바로전송",
+      align: "center",
+      render: (_, record) => <Button>전송</Button>,
     },
   ];
 
@@ -396,8 +462,8 @@ function ReOrder() {
           <Segmented
             value={dayValue}
             style={{ marginBottom: 8 }}
-            onChange={setDayValue}
-            options={["전체", "1일", "3일", "7일"]}
+            // onChange={setDayValue}
+            options={["전체", "전송 O", "전송 X"]}
           />
         </Space>
 
@@ -469,4 +535,4 @@ function ReOrder() {
   );
 }
 
-export default ReOrder;
+export default FileSend;
