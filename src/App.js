@@ -8,6 +8,11 @@ import AdminLogin from "./pages/admin/login";
 import AdminSignup from "./pages/admin/signup";
 import Dashboard from "./pages/admin";
 import RevisionForm from "./pages/ourwedding/revison/form";
+import Taility from "./pages/taility";
+import TailityLogin from "./pages/taility/login";
+import TailityNewRequest from "./pages/taility/new";
+import TailityRevisionRequest from "./pages/taility/revison";
+import TailityRevisionForm from "./pages/taility/revison/form";
 
 function App() {
   return (
@@ -18,6 +23,12 @@ function App() {
         <Route path="/ourwedding/new" element={<NewRequest />} />
         <Route path="/ourwedding/revison" element={<RevisionRequest />} />
         <Route path="/ourwedding/revison/form" element={<RevisionForm />} />
+
+        <Route path="/taility" element={<Taility />} />
+        <Route path="/taility/login" element={<TailityLogin />} />
+        <Route path="/taility/new" element={<TailityNewRequest />} />
+        <Route path="/taility/revison" element={<TailityRevisionRequest />} />
+        <Route path="/taility/revison/form" element={<TailityRevisionForm />} />
 
         {/* 관리자 */}
         <Route path={"/admin/*"} element={<Dashboard />} />

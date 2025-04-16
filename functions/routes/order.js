@@ -137,14 +137,18 @@ router.get("/user/:userId", async (req, res) => {
 
 // ✅ CREATE (주문 저장)
 router.post("/", async (req, res) => {
-  console.log(req.body);
   try {
-    const newOrder = new Order(...Object.values(req.body));
+    // undefined 제거
+    const cleanedOrder = Object.fromEntries(
+      Object.entries(req.body).map(([key, value]) => [key, value ?? ""])
+    );
+
     const orderRef = db.ref("orders").push();
-    await orderRef.set(newOrder);
+    await orderRef.set(cleanedOrder); // 여기서 undefined 들어가면 터짐
 
     res.status(200).json({ success: true, orderId: orderRef.key });
   } catch (error) {
+    console.error("🔥 Firebase 저장 실패:", error);
     res.status(500).json({ success: false, message: "데이터 저장 실패" });
   }
 });
