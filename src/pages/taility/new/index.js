@@ -1062,7 +1062,7 @@ ex) 셀카 or 스튜디오 보정본`}
             justifyContent: "center",
             marginBottom: -parseInt(fontSize.replace("px")),
             paddingInline: paddingBox,
-            marginTop: paddingBlock,
+            marginTop: "10vh",
           }}
         >
           <Flex

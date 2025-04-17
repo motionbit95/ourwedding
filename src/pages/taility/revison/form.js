@@ -6,6 +6,7 @@ import {
   Flex,
   Form,
   Grid,
+  Image,
   Input,
   Modal,
   Select,
@@ -20,7 +21,7 @@ import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { MdAttachFile } from "react-icons/md";
 import { FiFilePlus } from "react-icons/fi";
-import { BsCaretRightFill } from "react-icons/bs";
+import { BsCaretRight } from "react-icons/bs";
 import { LoadingOutlined } from "@ant-design/icons";
 
 import {
@@ -384,26 +385,31 @@ function TailityRevisionForm() {
       theme={{
         components: {
           Form: {
-            labelColor: "#4F3415",
+            labelColor: "black",
             labelFontSize: "16px",
             labelColonMarginInlineEnd: "10vw",
           },
           Checkbox: {
-            colorPrimary: "rgba(110, 134, 95, 1)",
-            colorBgContainer: "rgba(110, 134, 95, 0.3)",
-            colorBorder: "#d9d9d9",
-            colorPrimaryHover: "rgba(110, 134, 95, 0.3)",
-            controlInteractiveSize: 20,
+            colorPrimary: "#000000", // 선택된 체크박스의 색상 (검정)
+            colorBgContainer: "#ffffff", // 체크박스 배경색 (흰색)
+            colorBorder: "#555", // 체크박스의 테두리 색상 (검정)
+            colorPrimaryHover: "#8c8c8c", // 체크박스를 호버했을 때 배경색 (약간 밝은 회색)
+            controlInteractiveSize: 20, // 체크박스 크기
           },
           Button: {
-            colorPrimary: "rgba(201, 210, 185, 1)",
+            colorPrimary: "rgba(1, 1, 1, 1)",
             colorPrimaryHover: "rgba(180, 190, 170, 1)",
-            colorTextLightSolid: "rgba(79, 52, 21, 1)",
+            colorTextLightSolid: "white",
             colorPrimaryActive: "#ADA69E",
+            borderRadius: 0,
           },
           Upload: {
             colorPrimary: "rgba(201, 210, 185, 1)",
             colorPrimaryHover: "rgba(180, 190, 170, 1)",
+          },
+          Divider: {
+            colorSplit: "black",
+            lineWidth: 1,
           },
         },
       }}
@@ -423,29 +429,70 @@ function TailityRevisionForm() {
       >
         <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
       </div>
-      <Flex vertical style={{ alignItems: "center", justifyContent: "center" }}>
-        <Flex
-          vertical
-          style={{
-            width: "100%",
-            maxWidth: "900px",
-          }}
-        >
-          <Typography.Title
-            level={screens.lg ? 1 : 2}
-            style={{ color: "rgba(62, 83, 49, 1)", marginLeft: "60px" }}
-          >
-            주문자 정보(재수정)
-          </Typography.Title>
-          <div
-            style={{
-              height: "16px",
-              backgroundColor: "rgba(164, 121, 72, 0.3)",
-              width: screens.lg ? "360px" : "280px",
-              marginTop: screens.lg ? "-36px" : "-28px",
-            }}
-          />
-        </Flex>
+      <Flex
+        vertical
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          overflow: "hidden",
+        }}
+      >
+        {screens.lg ? (
+          <>
+            <Typography
+              style={{
+                fontFamily: "Linden Hill",
+                fontSize: "196px", // 부모 폰트 크기 기준으로 상대적 크기 설정
+                whiteSpace: "nowrap", // 한 줄로 유지
+                marginBottom: -96,
+              }}
+            >
+              Order Information
+            </Typography>
+            <Typography
+              style={{
+                fontFamily: "Linden Hill",
+                whiteSpace: "nowrap", // 한 줄로 유지
+                fontWeight: 300,
+                fontSize: "48px",
+                color: "transparent",
+                WebkitTextStroke: "0.5px black",
+              }}
+            >
+              (Remodification)
+            </Typography>
+          </>
+        ) : (
+          <>
+            <Typography
+              style={{
+                fontFamily: "Linden Hill",
+                fontSize: "17vw", // 화면 가로 크기 13%로 폰트 크기 조정
+                whiteSpace: "nowrap", // 한 줄로 유지
+                width: "100%", // 부모 요소의 너비에 맞추기
+                // overflow: "hidden", // 넘친 텍스트는 숨기기
+                display: "block", // 텍스트를 블록으로 처리하여 가운데 정렬 가능
+                textAlign: "center", // 가운데 정렬
+                transform: "translateX(-8vw)", // 수평 이동으로 가운데 정렬
+                position: "relative", // 부모 요소에 상대적으로 위치 조정
+                marginBottom: "-8vw",
+              }}
+            >
+              Order Information
+            </Typography>
+            <Typography
+              style={{
+                fontFamily: "Linden Hill",
+                whiteSpace: "nowrap", // 한 줄로 유지
+                fontWeight: 300,
+                fontSize: "5vw",
+              }}
+            >
+              (New)
+            </Typography>
+            {/* <Input type="file" onChange={updateFile} /> */}
+          </>
+        )}
         <Form
           labelAlign="left"
           labelCol={{ span: 10 }}
@@ -508,14 +555,13 @@ function TailityRevisionForm() {
       <Divider
         plain
         style={{
-          color: "#A79166",
           fontFamily: "Rufina",
           fontWeight: 400,
           fontSize,
           paddingTop: paddingBlock,
         }}
       >
-        Our wedding
+        <Image src={require("../../../asset/s.png")} preview={false} />
       </Divider>
 
       <Flex
@@ -525,44 +571,66 @@ function TailityRevisionForm() {
         }}
       >
         <Flex vertical gap={"large"}>
-          <Typography
-            style={{ color: "rgba(177, 82, 82, 1)", fontWeight: 700 }}
-          >
-            ⚠️ 사진 업로드전 먼저 확인 부탁드립니다 :)
-          </Typography>
           <Flex vertical gap={"middle"}>
             <Space>
-              <Typography.Title level={4} style={{ margin: "0 0 3px 0" }}>
-                사진 업로드
+              <Typography.Title
+                level={4}
+                style={{ margin: "0 0 3px 0", fontFamily: "Baskervville" }}
+              >
+                Photo upload
               </Typography.Title>
-              <MdAttachFile size={18} />
+              {/* <MdAttachFile size={18} /> */}
+              <Typography>사진 업로드</Typography>
             </Space>
 
             <div
               style={{
                 padding: paddingBox,
-                backgroundColor: "rgba(110, 133, 87, 0.2)",
+                border: "1px solid black",
+                position: "relative",
               }}
             >
-              <Typography.Paragraph style={{ color: "rgba(85, 68, 30, 1)" }}>
+              {/* 왼쪽 가운데 이미지 */}
+              <img
+                src={require("../../../asset/s.png")}
+                alt="decoration"
+                style={{
+                  position: "absolute",
+                  left: "-10px", // border의 왼쪽 바깥으로
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "20px", // 원하는 이미지 크기
+                  height: "auto",
+                  backgroundColor: "white", // 필요 시 배경처리
+                  zIndex: 1,
+                }}
+              />
+              <Typography.Paragraph style={{ color: "black" }}>
                 <Flex vertical gap={"large"}>
                   <li style={{ whiteSpace: "pre-line" }}>
-                    {`사진은 업로드 후 변경이 불가능하니 신중하게 업로드 부탁 드립니다.`}
+                    {`파일 업로드는 raw / jpeg / jpg / cr2 / cr3 / heic만 가능합니다.
+                     ㄴ 그 이외에 파일은 해당 사이트에서 파일 변환하여 업로드바랍니다. `}
+                    <Typography.Link
+                      style={{
+                        color: "rgba(204, 87, 58, 1)",
+                        fontWeight: 700,
+                      }}
+                      onClick={() => window.open("https://convertio.co/kr/")}
+                    >
+                      Convertio — 파일 변환기
+                    </Typography.Link>
+                    {" : 파일전환 페이지"}
                   </li>
 
                   <li style={{ whiteSpace: "pre-line" }}>
-                    {`공정한 재수정 접수를 위해 1건의 주문 당 1건의 재수정 접수만 받고 있습니다. 
-      그러므로 재수정 요청 시 한번에 정리하여 접수 바랍니다.`}
+                    {
+                      "사진은 업로드 후 변경이 불가능하니 신중하게 업로드 부탁 드립니다."
+                    }
                   </li>
 
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`파일용량은 꼭 확인 후 가장 큰 파일로 업로드 부탁 드립니다.
-      휴대폰(카톡)으로 이동 시 파일 크기가 작아지는 경우가 있으니, 꼭 파일 크기 확인 부탁드립니다.`}
-                  </li>
-                  <li style={{ whiteSpace: "pre-line" }}>
-                    {`원본 재작업은 불가합니다. 그러므로 보정강도를 줄이거나 복구가 필요한 부분이 있을 시 원본을 참고해야 하기에
-      [원본+보정본]을 함께 첨부 부탁 드립니다. 
-      ㄴ 재수정 위치를 표시한 사진을 전달시에는 [표시 사진 + 보정본] 보내주셔야 합니다.`}
+                     ㄴ 작업 이후 파일 크기로 인한 재작업은 재주문 후 진행해야 합니다.`}
                   </li>
                 </Flex>
               </Typography.Paragraph>
@@ -579,7 +647,7 @@ function TailityRevisionForm() {
                 style={{
                   fontSize: "16px",
                   fontWeight: 600,
-                  color: "rgba(79, 52, 21, 1)",
+                  color: "black",
                 }}
               >
                 업로드 된 사진 파일 갯수 : {photoList.length}장
@@ -609,8 +677,8 @@ function TailityRevisionForm() {
                 }}
               >
                 <Button
-                  type="primary"
-                  icon={<FiFilePlus color="rgba(85, 68, 30, 1)" />}
+                  // type="primary"
+                  icon={<FiFilePlus color="black" />}
                 >
                   사진 업로드
                 </Button>
@@ -619,14 +687,20 @@ function TailityRevisionForm() {
           </Flex>
 
           <Flex vertical gap={"middle"}>
-            <Space>
-              <Typography.Title level={4} style={{ margin: "0 0 3px 0" }}>
-                요청사항 작성
-              </Typography.Title>
-              <MdAttachFile size={18} />
+            <Space style={{ justifyContent: "space-between" }}>
+              <Space>
+                <Typography.Title
+                  level={4}
+                  style={{ margin: "0 0 3px 0", fontFamily: "Baskervville" }}
+                >
+                  Requests fill in
+                </Typography.Title>
+                {/* <MdAttachFile size={18} /> */}
+                <Typography>요청사항 작성</Typography>
+              </Space>
               <Button
                 style={{
-                  backgroundColor: "rgba(79, 52, 21, 0.6)",
+                  backgroundColor: "rgba(0, 0, 0, 0.8)",
                   color: "white",
                   fontWeight: 700,
                   border: "none",
@@ -667,12 +741,27 @@ function TailityRevisionForm() {
                 <div
                   style={{
                     padding: paddingBox,
-                    backgroundColor: "rgba(110, 133, 87, 0.2)",
+                    border: "1px solid black",
+                    borderLeft: "none",
+                    position: "relative",
                   }}
                 >
-                  <Typography.Paragraph
-                    style={{ color: "rgba(85, 68, 30, 1)" }}
-                  >
+                  {/* 왼쪽 가운데 이미지 */}
+                  <img
+                    src={require("../../../asset/s.png")}
+                    alt="decoration"
+                    style={{
+                      position: "absolute",
+                      right: "-10px", // border의 왼쪽 바깥으로
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: "20px", // 원하는 이미지 크기
+                      height: "auto",
+                      backgroundColor: "white", // 필요 시 배경처리
+                      zIndex: 1,
+                    }}
+                  />
+                  <Typography.Paragraph style={{ color: "black" }}>
                     <Flex vertical gap={"large"}>
                       <li style={{ whiteSpace: "pre-line" }}>
                         {`개별 추가 요청사항 (밝기 조절은 기재해주시면 가능합니다.) (색감 작업은 필름 결제 해주셔야 합니다.)
@@ -687,32 +776,50 @@ function TailityRevisionForm() {
             <div
               style={{
                 padding: paddingBox,
-                backgroundColor: "rgba(110, 133, 87, 0.2)",
+                border: "1px solid black",
+                borderRight: "none",
+                position: "relative",
               }}
             >
-              <Typography.Paragraph style={{ color: "rgba(85, 68, 30, 1)" }}>
+              {/* 왼쪽 가운데 이미지 */}
+              <img
+                src={require("../../../asset/s.png")}
+                alt="decoration"
+                style={{
+                  position: "absolute",
+                  left: "-10px", // border의 왼쪽 바깥으로
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "20px", // 원하는 이미지 크기
+                  height: "auto",
+                  backgroundColor: "white", // 필요 시 배경처리
+                  zIndex: 1,
+                }}
+              />
+              <Typography.Paragraph style={{ color: "black" }}>
                 <Flex vertical gap={"large"}>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`상단 [요청사항] 클릭 시 작성해야 될 텍스트가 복사되니, 텍스트를 기반으로 요청사항 작성해주세요.`}
+                  </li>
+                  <li style={{ whiteSpace: "pre-line" }}>
+                    {`상세페이지 기본수정사항에 있는 부분은 자동으로 적용되는 사항들이니
+                     요청사항 기재 시 기본수정사항 제외한 후 추가적으로 원하시는 부분을 기재 해주세요.`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`요청사항 기재 시 좌우에 대한 기준은 모니터를 바라봤을때의 기준입니다. (모니터 속 인물 기준 X)`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`요청사항 기재 시 꼭 모호한 표현이 아닌, 정확한 부분에 대한 보정 방향을 기재해주세요.
-         자연스럽게  (X)   ➡️    얼굴 전체 크기를 줄여주세요.  (O)
-         예쁘게         (X)    ➡️    눈을 밑쪽으로 키워주세요.        (O) 
-         어려보이게  (X)    ➡️    중안부를 짧게 해주세요.           (O)
-         착해보이게  (X)    ➡️    왼쪽 입꼬리를 올려주세요.       (O)`}
+       자연스럽게  (X)   ➡️    얼굴 전체 크기를 줄여주세요.  (O)
+       예쁘게         (X)    ➡️    눈을 밑쪽으로 키워주세요.        (O) 
+       어려보이게  (X)    ➡️    중안부를 짧게 해주세요.           (O)
+       착해보이게  (X)    ➡️    왼쪽 입꼬리를 올려주세요.       (O)`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
-                    {`요청사항(5가지) 초과 시 추가금 있습니다.`}
+                    {`(2인 기준) 전체  요청사항(10가지) / 개별 요청사항(5가지) 초과 시 추가금 있습니다.`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`밝기 부분은 요청사항 기재 시 적용 가능합니다. 다만 색감 요청 시에는 필름 결제 후 요청 가능합니다.`}
-                  </li>
-                  <li style={{ whiteSpace: "pre-line" }}>
-                    {`보정강도를 줄이거나 복구가 필요한 부분이 있을 시 꼭 [원본 + 보정본]을 함께 첨부 부탁드립니다.`}
                   </li>
                   <li style={{ whiteSpace: "pre-line" }}>
                     {`접수 이후 요청사항 추가는 불가능하니, 빠진 부분이 없는지 재차 확인 부탁 드립니다.`}
@@ -722,7 +829,7 @@ function TailityRevisionForm() {
             </div>
 
             <Input.TextArea
-              rows={10}
+              rows={12}
               autoSize={true}
               onChange={(e) => setComment(e.target.value)}
               defaultValue={`개별 추가 요청사항 (밝기 조절은 기재해주시면 가능합니다.) (색감 작업은 필름 결제 해주셔야 합니다.)
@@ -733,20 +840,6 @@ function TailityRevisionForm() {
         </Flex>
       </Flex>
 
-      <Divider
-        plain
-        style={{
-          color: "transparent",
-          WebkitTextStroke: "0.6px #A79166",
-          fontFamily: "Rufina",
-          fontWeight: 400,
-          fontSize,
-          paddingTop: paddingBlock,
-        }}
-      >
-        Ourdrama
-      </Divider>
-
       <Flex vertical>
         <Flex
           style={{
@@ -754,21 +847,29 @@ function TailityRevisionForm() {
             justifyContent: "center",
             marginBottom: -parseInt(fontSize.replace("px")),
             paddingInline: paddingBox,
+            marginTop: "10vh",
           }}
         >
-          <Typography
+          <Flex
             style={{
               width: "100%",
               maxWidth: "900px",
-              color: "transparent",
-              WebkitTextStroke: "0.6px #A79166",
-              fontFamily: "Rufina",
-              fontWeight: 400,
-              fontSize: parseInt(fontSize.replace("px")) * 1.3,
             }}
           >
-            Caution
-          </Typography>
+            <Typography
+              style={{
+                zIndex: 99,
+                paddingInline: "20px",
+                display: "inline", // ✅ 텍스트만큼만 영역 차지
+                fontFamily: "Castoro Titling",
+                fontWeight: 400,
+                fontSize: parseInt(fontSize.replace("px")) * 1.3,
+                backgroundColor: "white", // ✅ 텍스트 배경에만 적용
+              }}
+            >
+              Caution
+            </Typography>
+          </Flex>
         </Flex>
 
         <Flex
@@ -776,7 +877,8 @@ function TailityRevisionForm() {
           style={{
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor: "rgba(192, 176, 152, 0.3)",
+            borderBlock: "1px solid black",
+            // backgroundColor: "rgba(192, 176, 152, 0.3)",
           }}
         >
           <Flex
@@ -802,7 +904,7 @@ function TailityRevisionForm() {
                     columnGap: "36px",
                     whiteSpace: "pre-line",
                     fontSize: "14px",
-                    color: "rgba(85, 68, 30, 1)",
+                    color: "black",
                   }}
                 >
                   <span>• {item.text}</span>
@@ -829,31 +931,51 @@ function TailityRevisionForm() {
           </Flex>
         </Flex>
 
-        <Flex vertical>
+        <Flex
+          vertical
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: "36px",
+          }}
+        >
+          <Image
+            src={require("../../../asset/s.png")}
+            preview={false}
+            style={{ width: 30, height: "auto" }}
+          />
+          <div
+            style={{
+              width: 1,
+              height: 50,
+              backgroundColor: "black",
+              marginTop: 10,
+            }}
+          />
           <Button
             onClick={handleFormUpload}
             htmlType="submit"
-            icon={<BsCaretRightFill />}
+            icon={<BsCaretRight />}
             iconPosition="end"
             type="primary"
-            disabled={checkedItems.filter((item) => item).length < 4}
+            disabled={checkedItems.filter((item) => item).length < 3}
             style={{
               width: "auto",
               paddingInline: "16px",
-              alignSelf: "center",
-              marginTop: "36px",
+
               marginBottom: paddingBlock,
               paddingInline: "48px",
+              fontFamily: "Baskervville",
             }}
           >
-            업로드
+            UPLOAD
           </Button>
         </Flex>
       </Flex>
 
       <style>
         @import
-        url('https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&display=swap');
+        url('https://fonts.googleapis.com/css2?family=Aboreto&family=Baskervville:ital@0;1&family=Castoro+Titling&family=Linden+Hill:ital@0;1&display=swap');
       </style>
 
       <style jsx>{`
@@ -901,6 +1023,34 @@ function TailityRevisionForm() {
 
         :global(.ant-checkbox) {
           width: 100%;
+          border: 2px solid #333; /* 검정색 테두리 */
+          background-color: white; /* 흰색 배경 */
+          border-radius: 4px; /* 둥근 테두리 */
+          transition: background-color 0.2s, border-color 0.2s; /* 색상 변화 */
+        }
+
+        :global(.ant-checkbox-checked) {
+          background-color: #333; /* 체크박스가 선택되었을 때 검정색 */
+          border-color: #333; /* 검정색 테두리 */
+        }
+
+        :global(.ant-checkbox-checked .ant-checkbox-inner) {
+          background-color: #333; /* 체크된 부분의 배경색을 검정색으로 */
+          border-color: #333; /* 체크된 부분의 테두리 색 */
+        }
+
+        :global(.ant-checkbox-inner) {
+          width: 20px;
+          height: 20px;
+          background-color: white; /* 기본 배경 흰색 */
+          border: 2px solid #333; /* 기본 테두리 검정색 */
+          border-radius: 4px; /* 둥근 모서리 */
+          transition: background-color 0.2s, border-color 0.2s; /* 색상 변화 */
+        }
+
+        :global(.ant-checkbox-checked .ant-checkbox-inner) {
+          background-color: #333; /* 선택된 상태에서 배경 검정색 */
+          border-color: #333; /* 선택된 상태에서 테두리 검정색 */
         }
       `}</style>
     </ConfigProvider>

@@ -216,7 +216,7 @@ function TailityRevisionRequest() {
         );
         setUser(response.data.user);
       } catch (error) {
-        navigation("/ourwedding/login", { state: { nextPage: "new" } });
+        navigation("/taility/login", { state: { nextPage: "new" } });
       }
     };
     verifyToken();
