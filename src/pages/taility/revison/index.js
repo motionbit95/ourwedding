@@ -227,26 +227,16 @@ function TailityRevisionRequest() {
       theme={{
         components: {
           Form: {
-            labelColor: "#4F3415",
+            labelColor: "black",
             labelFontSize: "16px",
             labelColonMarginInlineEnd: "10vw",
           },
-          Checkbox: {
-            colorPrimary: "rgba(110, 134, 95, 1)",
-            colorBgContainer: "rgba(110, 134, 95, 0.3)",
-            colorBorder: "#d9d9d9",
-            colorPrimaryHover: "rgba(110, 134, 95, 0.3)",
-            controlInteractiveSize: 20,
-          },
           Button: {
-            colorPrimary: "rgba(201, 210, 185, 1)",
-            colorPrimaryHover: "rgba(180, 190, 170, 1)",
-            colorTextLightSolid: "rgba(79, 52, 21, 1)",
+            colorPrimary: "#f5f5f5",
+            colorPrimaryHover: "#f1f1f1",
+            colorTextLightSolid: "black",
             colorPrimaryActive: "#ADA69E",
-          },
-          Upload: {
-            colorPrimary: "rgba(201, 210, 185, 1)",
-            colorPrimaryHover: "rgba(180, 190, 170, 1)",
+            borderRadius: 0,
           },
         },
       }}
@@ -256,28 +246,68 @@ function TailityRevisionRequest() {
         <Flex
           vertical
           style={{
-            width: "100%",
-            maxWidth: "900px",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
           }}
         >
-          <Typography.Title
-            level={screens.lg ? 1 : 2}
-            style={{
-              zIndex: 99,
-              color: "rgba(128, 113, 69, 1)",
-              marginLeft: "60px",
-            }}
-          >
-            접수내역 (재수정 신청)
-          </Typography.Title>
-          <div
-            style={{
-              height: "16px",
-              backgroundColor: "rgba(220, 222, 204, 1)",
-              width: screens.lg ? "400px" : "330px",
-              marginTop: screens.lg ? "-36px" : "-28px",
-            }}
-          />
+          {screens.lg ? (
+            <>
+              <Typography
+                style={{
+                  fontFamily: "Linden Hill",
+                  fontSize: "196px",
+                  whiteSpace: "nowrap",
+                  marginBottom: -64,
+                  textAlign: "center",
+                }}
+              >
+                Receipt details
+              </Typography>
+              <Typography
+                style={{
+                  fontFamily: "Linden Hill",
+                  whiteSpace: "nowrap",
+                  fontWeight: 300,
+                  fontSize: "48px",
+                  textAlign: "center",
+                  color: "transparent",
+                  WebkitTextStroke: "0.5px black",
+                }}
+              >
+                (Application for revision)
+              </Typography>
+            </>
+          ) : (
+            <>
+              <Typography
+                style={{
+                  fontFamily: "Linden Hill",
+                  fontSize: "13vw", // 적당한 비율로 조절
+                  whiteSpace: "nowrap",
+                  width: "100%",
+                  overflow: "hidden",
+                  textAlign: "center", // ✅ 가운데 정렬만 사용
+                  marginBottom: "-4vw",
+                }}
+              >
+                Receipt details
+              </Typography>
+              <Typography
+                style={{
+                  fontFamily: "Linden Hill",
+                  whiteSpace: "nowrap",
+                  fontWeight: 300,
+                  fontSize: "4vw",
+                  textAlign: "center", // ✅ 동일하게 중앙 정렬
+                  color: "transparent",
+                  WebkitTextStroke: "0.5px black",
+                }}
+              >
+                (Application for revision)
+              </Typography>
+            </>
+          )}
         </Flex>
       </Flex>
       <Flex
@@ -285,14 +315,50 @@ function TailityRevisionRequest() {
         style={{
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "rgba(110, 133, 87, 0.2)",
+          // backgroundColor: "rgba(110, 133, 87, 0.2)",
           marginBlock: paddingBlock,
+          borderBlock: "1px solid black",
         }}
       >
         <Flex
           style={{
+            width: "100%",
+            maxWidth: "900px",
+            position: "relative",
+          }}
+        >
+          <Space
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              zIndex: 99,
+              paddingInline: "20px",
+              fontFamily: "Castoro Titling",
+              fontWeight: 400,
+              fontSize: parseInt(fontSize.replace("px")) * 1.3,
+              backgroundColor: "white", // ✅ 텍스트 배경에만 적용
+              transform: "translateY(-50%)",
+            }}
+          >
+            <Typography
+              style={{
+                display: "inline", // ✅ 텍스트만큼만 영역 차지
+                fontFamily: "Castoro Titling",
+                fontWeight: 400,
+                fontSize: parseInt(fontSize.replace("px")) * 1.3,
+              }}
+            >
+              Caution
+            </Typography>
+            <Typography>안내사항</Typography>
+          </Space>
+        </Flex>
+        <Flex
+          style={{
             paddingInline: paddingBox,
             paddingBlock: 36,
+            paddingTop: paddingBlock,
           }}
         >
           <Flex
@@ -302,9 +368,6 @@ function TailityRevisionRequest() {
             }}
             gap={"24px"}
           >
-            <Typography.Title level={4} style={{ margin: 0 }}>
-              안내사항
-            </Typography.Title>
             {CAUTION_ITEMS.map((item, index) => (
               <div
                 key={index}
@@ -312,7 +375,7 @@ function TailityRevisionRequest() {
                   alignItems: "center",
                   whiteSpace: "pre-line",
                   fontSize: "14px",
-                  color: "rgba(85, 68, 30, 1)",
+                  color: "black",
                 }}
               >
                 <span>• {item.text}</span>
@@ -337,10 +400,7 @@ function TailityRevisionRequest() {
               }}
             >
               <Flex gap={screens.lg ? "large" : "middle"} vertical>
-                <Typography.Title
-                  level={4}
-                  style={{ color: "rgba(79, 52, 21, 1)" }}
-                >
+                <Typography.Title level={4} style={{ color: "black" }}>
                   {order.receivedDate}
                 </Typography.Title>
 
@@ -417,7 +477,11 @@ function TailityRevisionRequest() {
                     }}
                   >
                     <Button
-                      style={{ width: "100%" }}
+                      style={{
+                        width: "100%",
+                        border: "1px solid #d9d9d9",
+                        boxShadow: "none",
+                      }}
                       type="primary"
                       iconPosition="end"
                       icon={<BsCaretRightFill />}
@@ -429,7 +493,7 @@ function TailityRevisionRequest() {
                       iconPosition="end"
                       icon={<BsCaretRightFill />}
                       style={{
-                        backgroundColor: "rgba(69, 85, 43, 1)",
+                        backgroundColor: "black",
                         color: "white",
                         width: "100%",
                       }}
@@ -448,7 +512,11 @@ function TailityRevisionRequest() {
                     }}
                   >
                     <Button
-                      style={{ width: "100%" }}
+                      style={{
+                        width: "100%",
+                        border: "1px solid #d9d9d9",
+                        boxShadow: "none",
+                      }}
                       type="primary"
                       iconPosition="end"
                       icon={<BsCaretRightFill />}
@@ -456,7 +524,11 @@ function TailityRevisionRequest() {
                       1차 보정본 다운로드
                     </Button>
                     <Button
-                      style={{ width: "100%" }}
+                      style={{
+                        width: "100%",
+                        border: "1px solid #d9d9d9",
+                        boxShadow: "none",
+                      }}
                       type="primary"
                       iconPosition="end"
                       icon={<BsCaretRightFill />}
@@ -468,9 +540,10 @@ function TailityRevisionRequest() {
                       iconPosition="end"
                       icon={<BsCaretRightFill />}
                       style={{
-                        backgroundColor: "rgba(69, 85, 43, 1)",
-                        color: "white",
+                        backgroundColor: "#D0D0D0",
+                        color: "black",
                         width: "100%",
+                        boxShadow: "none",
                       }}
                       onClick={() => navigation("form", { state: { order } })}
                     >
@@ -493,7 +566,7 @@ function TailityRevisionRequest() {
 
       <style>
         @import
-        url('https://fonts.googleapis.com/css2?family=Rufina:wght@400;700&display=swap');
+        url('https://fonts.googleapis.com/css2?family=Aboreto&family=Baskervville:ital@0;1&family=Castoro+Titling&family=Linden+Hill:ital@0;1&display=swap');
       </style>
       <style jsx>{`
         .checkbox-group {
