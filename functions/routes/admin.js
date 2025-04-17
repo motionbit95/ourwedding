@@ -10,12 +10,18 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || "your_secret_key";
 
 // 관리자 회원가입 엔드포인트
 router.post("/signup", async (req, res) => {
-  const { admin_id, admin_pw } = req.body;
+  const {
+    admin_id,
+    admin_pw,
+    admin_permission = "작업자",
+    admin_name,
+  } = req.body;
 
-  if (!admin_id || !admin_pw) {
-    return res
-      .status(400)
-      .json({ code: -2000, message: "admin_id와 admin_pw를 입력하세요." });
+  if (!admin_id || !admin_pw || !admin_name) {
+    return res.status(400).json({
+      code: -2000,
+      message: "이름, admin_id와 admin_pw를 입력하세요.",
+    });
   }
 
   try {
@@ -35,6 +41,8 @@ router.post("/signup", async (req, res) => {
       admin_pw: hashedPw,
       createdAt: timestamp,
       lastActiveAt: timestamp,
+      admin_permission,
+      admin_name,
     });
 
     res.status(201).json({ message: "관리자 회원가입 성공" });
@@ -85,6 +93,7 @@ router.post("/login", async (req, res) => {
       message: "관리자 로그인 성공",
       token,
       lastActiveAt,
+      permission: adminData.admin_permission,
     });
   } catch (error) {
     res.status(500).json({

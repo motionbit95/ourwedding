@@ -44,7 +44,9 @@ function AdminLogin(props) {
         console.log(response.data);
         localStorage.setItem("admin-token", response.data.token);
         // 로그인 성공
-        navigation(`/admin`);
+
+        if (response.data.permission === "관리자") navigation(`/admin`);
+        else navigation(`/worker`);
       })
       .catch((error) => {
         console.log(error.response);
@@ -149,7 +151,7 @@ function AdminLogin(props) {
                 로그인
               </Button>
 
-              <Button
+              {/* <Button
                 onClick={() => navigation("/admin/signup")}
                 icon={<BsCaretRightFill />}
                 iconPosition="end"
@@ -162,7 +164,7 @@ function AdminLogin(props) {
                 }}
               >
                 회원가입
-              </Button>
+              </Button> */}
             </Flex>
           </Flex>
         </Form>

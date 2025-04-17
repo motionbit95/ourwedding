@@ -113,6 +113,16 @@ function AdminSignup(props) {
           >
             <Form.Item
               colon={false}
+              name={"admin_name"}
+              label={"이름"}
+              rules={[
+                { required: true, message: "관리자 이름을 입력해주세요." },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item
+              colon={false}
               name={"admin_id"}
               label={"아이디"}
               rules={[

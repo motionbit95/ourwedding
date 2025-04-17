@@ -274,7 +274,7 @@ function TailityRevisionForm() {
       grade: order.grade,
       photoCount: photoList.length,
       revisionDownload: downloadLinkAddr,
-      company: "아워웨딩",
+      company: "테일리티",
       division: "재수정",
       step: `재수정 작업중 (완료 예정일: ${deadline})`,
       comment: comment,
@@ -313,7 +313,7 @@ function TailityRevisionForm() {
         const fileExtension = fileObj.name.substring(
           fileObj.name.lastIndexOf(".")
         );
-        const rawFileName = `아워웨딩_재수정_${userName}_${userId}_${
+        const rawFileName = `테일리티_재수정_${userName}_${userId}_${
           index + 1
         }${fileExtension}`;
         const encodedFileName = encodeURIComponent(rawFileName);
@@ -363,7 +363,7 @@ function TailityRevisionForm() {
         );
         setUser(response.data.user);
       } catch (error) {
-        navigation("/ourwedding/login", { state: { nextPage: "new" } });
+        navigation("/taility/login", { state: { nextPage: "new" } });
       }
     };
     verifyToken();

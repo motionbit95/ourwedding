@@ -13,6 +13,7 @@ import TailityLogin from "./pages/taility/login";
 import TailityNewRequest from "./pages/taility/new";
 import TailityRevisionRequest from "./pages/taility/revison";
 import TailityRevisionForm from "./pages/taility/revison/form";
+import WorkerDashboard from "./pages/worker";
 
 function App() {
   return (
@@ -34,6 +35,9 @@ function App() {
         <Route path={"/admin/*"} element={<Dashboard />} />
         <Route path={"/admin/login"} element={<AdminLogin />} />
         <Route path={"/admin/signup"} element={<AdminSignup />} />
+
+        {/* 작업자 */}
+        <Route path={"/worker/*"} element={<WorkerDashboard />} />
       </Routes>
     </BrowserRouter>
   );
