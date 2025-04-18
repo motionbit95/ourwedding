@@ -9,7 +9,7 @@ import {
   Upload,
 } from "antd";
 import axios from "axios";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import qs from "qs";
 
 import JSZip from "jszip";
@@ -56,49 +56,75 @@ function WorkerStatus() {
     onSuccess("ok"); // 강제로 성공 처리
   };
 
-  const handlePhotoUpload = async ({ file, fileList }, order) => {
-    setLoading({ isLoading: true, type: "재수정" });
+  const uploadTimer = useRef(null);
+
+  const handlePhotoUpload = ({ file, fileList }, order) => {
     if (!order) return;
+
+    setLoading({ isLoading: true, type: "1차보정" });
     setSelectOrder(order);
-    if (file.status === "done") {
-      console.log("order :", order);
 
-      const file_ = await uploadFiles(fileList, order.userName, order.userId);
-      const downloadLinkAddr = file_.map((f) => f.downloadLink);
-
-      console.log(downloadLinkAddr);
-
-      const order_ = {
-        ...order,
-        photoCount: photoList.length,
-        reWorkDownload: downloadLinkAddr,
-        division: "재수정완료",
-      };
-
-      const { data } = await axios.put(
-        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
-        order_,
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      console.log(data);
-      setLoading({ isLoading: false, type: "1차보정" });
-      showMessage(
-        "success",
-        `${file.name} 사진이 성공적으로 업로드되었습니다.`
-      );
-
-      // 약간의 딜레이 후 새로고침 (사용자에게 메시지가 보이도록)
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } else if (file.status === "error") {
+    if (file.status === "error") {
       showMessage("error", `${file.name} 사진 업로드에 실패했습니다.`);
-      setLoading({ isLoading: false, type: "재수정" });
+      setLoading({ isLoading: false, type: "1차보정" });
     }
-    setPhotoList(fileList);
+
+    // 디바운스 처리로 여러 번 호출 방지
+    if (uploadTimer.current) clearTimeout(uploadTimer.current);
+
+    uploadTimer.current = setTimeout(() => {
+      const allDone = fileList.every((f) => f.status === "done");
+      if (allDone) {
+        setPhotoList(fileList); // 여기서 한 번만 처리
+        console.log("최종 order :", order);
+        // 여기서 handleUpload 호출해도 됨
+        // handleUpload();
+      }
+    }, 300); // 300ms 후 모든 업로드 완료됐을 때 한 번만 실행
+  };
+
+  useEffect(() => {
+    if (photoList && photoList.length > 0) {
+      handleUpload();
+    }
+  }, [photoList]);
+
+  const handleUpload = async () => {
+    const file_ = await uploadFiles(
+      photoList,
+      selectOrder.userName,
+      selectOrder.userId
+    );
+    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+
+    console.log(downloadLinkAddr);
+
+    const order_ = {
+      ...selectOrder,
+      photoCount: photoList.length,
+      firstWorkDownload: downloadLinkAddr,
+      division: "1차보정완료",
+    };
+
+    const { data } = await axios.put(
+      `${API_URL}/order/${selectOrder.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+      order_,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log(data);
+    // ✅ 성공 메시지
+    showMessage("success", "1차보정이 완료되었습니다.");
+
+    // ✅ 로딩 해제
+    setLoading({ isLoading: false, type: "1차보정" });
+
+    // ✅ 1초 후 새로고침
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   const uploadFiles = async (fileList, userName, userId) => {
@@ -108,9 +134,9 @@ function WorkerStatus() {
         const fileExtension = fileObj.name.substring(
           fileObj.name.lastIndexOf(".")
         );
-        const rawFileName = `아워웨딩_선작업_${userName}_${userId}_${
-          index + 1
-        }${fileExtension}`;
+        const rawFileName = `${
+          selectOrder.company
+        }_1차보정_${userName}_${userId}_${index + 1}${fileExtension}`;
         const encodedFileName = encodeURIComponent(rawFileName);
 
         const storageRef = ref(storage, `temp/${encodedFileName}`);
@@ -145,6 +171,8 @@ function WorkerStatus() {
 
   const handleDownloadZipOrigin = async (record) => {
     try {
+      setLoading({ isLoading: true, type: "원본" });
+      setSelectOrder(record);
       const response = await axios.post(
         `${API_URL}/download-zip`,
         {
@@ -157,8 +185,10 @@ function WorkerStatus() {
       const blob = new Blob([response.data], { type: "application/zip" });
       const filename = `${record.userName}_${record.orderNumber}_원본.zip`;
       saveAs(blob, filename);
+      setLoading({ isLoading: false, type: "원본" });
     } catch (error) {
       console.error("ZIP 다운로드 실패:", error);
+      setLoading({ isLoading: false, type: "원본" });
     }
   };
 
@@ -287,7 +317,7 @@ function WorkerStatus() {
           onClick={() => handleDownloadZipOrigin(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "원본"
           }
         >
@@ -303,7 +333,7 @@ function WorkerStatus() {
           onClick={() => handleDownloadZipPre(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "선작업"
           }
         >
@@ -314,20 +344,56 @@ function WorkerStatus() {
     {
       title: "뷰탭",
       align: "center",
+      className: "highlight-header",
       render: (_, record) => <Button>뷰탭</Button>,
     },
     {
       title: "1차보정본",
       align: "center",
+      className: "highlight-header",
       render: (_, record) => (
         <>
-          <Button>업로드</Button>
+          <Upload
+            accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
+            multiple
+            onChange={(info) => handlePhotoUpload(info, record)} // order를 인자로 넘김
+            fileList={photoList}
+            showUploadList={false}
+            customRequest={customUpload}
+            beforeUpload={(file) => {
+              const isValidType = [
+                ".raw",
+                ".jpeg",
+                ".jpg",
+                ".cr2",
+                ".cr3",
+                ".heic",
+              ].some((ext) => file.name.toLowerCase().endsWith(ext));
+              if (!isValidType) {
+                showMessage("error", "지원하지 않는 파일 형식입니다");
+                return Upload.LIST_IGNORE;
+              }
+              return true;
+            }}
+          >
+            <Button
+              type={record.firstWorkDownload.length > 1 ? "primary" : "default"}
+              loading={
+                record?.id === selectOrder?.id &&
+                isLoading?.isLoading &&
+                isLoading.type === "1차보정"
+              }
+            >
+              업로드
+            </Button>
+          </Upload>
         </>
       ),
     },
     {
       title: "전송예약",
       align: "center",
+      className: "highlight-header",
       render: (_, record) =>
         record.label === "샘플" ? (
           <Flex vertical gap={"small"}>

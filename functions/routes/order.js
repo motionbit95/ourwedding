@@ -49,6 +49,55 @@ const GRADE_WORK_DAYS = {
   "# 숲": 0.125, // 3시간 = 0.125일
 };
 
+router.get("/new", async (req, res) => {
+  const { company = "전체", day = "전체" } = req.query;
+
+  try {
+    const db = admin.database();
+    const snapshot = await db.ref("orders").once("value");
+    const orders = snapshot.val();
+
+    const now = dayjs();
+    const dayLimit = day === "전체" ? null : parseInt(day);
+
+    const stepList = ["접수완료"];
+
+    const filteredOrders = Object.entries(orders || {})
+      .filter(([id, order]) => {
+        const orderCompany = order.company;
+        const orderGrade = order.grade;
+        const orderStep = order.step; // <- 수정된 부분
+        const receivedDate = dayjs(order.receivedDate);
+        const workDays = GRADE_WORK_DAYS[orderGrade];
+
+        if (!receivedDate.isValid() || workDays === undefined) return false;
+
+        const dueDate = receivedDate.add(workDays, "day");
+        const remainingDays = dueDate.diff(now, "day", true);
+
+        const matchesCompany = company === "전체" || orderCompany === company;
+        const matchesDay =
+          dayLimit === null ||
+          (remainingDays >= 0 && remainingDays <= dayLimit);
+
+        const matchesStep = stepList.includes(orderStep);
+
+        return matchesCompany && matchesDay && matchesStep;
+      })
+      .map(([id, order]) => ({
+        id,
+        ...order,
+      }));
+
+    console.log(filteredOrders);
+
+    res.json({ orders: filteredOrders });
+  } catch (error) {
+    console.error("Error filtering orders:", error);
+    res.status(500).json({ error: "서버 오류 발생" });
+  }
+});
+
 // 주문 필터링 API
 router.get("/filter", async (req, res) => {
   const { company = "전체", day = "전체", step = "전체" } = req.query;
@@ -71,9 +120,11 @@ router.get("/filter", async (req, res) => {
 
     const queryStep = step;
     const stepList = Array.isArray(queryStep)
-      ? queryStep
+      ? queryStep.filter((s) => s !== "접수완료")
       : queryStep === "전체" || !queryStep
       ? allowedSteps
+      : queryStep === "접수완료"
+      ? [] // "접수완료"만 있을 경우 아무것도 보여주지 않음
       : [queryStep];
 
     const filteredOrders = Object.entries(orders || {})
@@ -94,11 +145,11 @@ router.get("/filter", async (req, res) => {
           dayLimit === null ||
           (remainingDays >= 0 && remainingDays <= dayLimit);
 
-        const matchesStep = stepList.some((s) =>
-          Array.isArray(orderStep) ? orderStep.includes(s) : orderStep === s
-        );
+        const isNotReceipt = orderStep !== "접수완료";
+        const matchesStep =
+          stepList.length === 0 || stepList.includes(orderStep);
 
-        return matchesCompany && matchesDay && matchesStep;
+        return matchesCompany && matchesDay && isNotReceipt && matchesStep;
       })
       .map(([id, order]) => ({
         id,

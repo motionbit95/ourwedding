@@ -264,12 +264,12 @@ function WorkList() {
           onClick={() => handleDownloadZipOrigin(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "원본"
           }
-          icon={<BsDownload />}
+          // icon={<BsDownload />}
         >
-          {/* 다운로드 */}
+          다운로드
         </Button>
       ),
     },
@@ -281,12 +281,12 @@ function WorkList() {
           onClick={() => handleDownloadZipPre(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "선작업"
           }
-          icon={<BsDownload />}
+          // icon={<BsDownload />}
         >
-          {/* 다운로드 */}
+          다운로드
         </Button>
       ),
     },
@@ -298,12 +298,12 @@ function WorkList() {
           onClick={() => handleDownloadZipFirstWork(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "1차보정"
           }
-          icon={<BsDownload />}
+          // icon={<BsDownload />}
         >
-          {/* 다운로드 */}
+          다운로드
         </Button>
       ),
     },
@@ -337,7 +337,7 @@ function WorkList() {
           <Button
             loading={
               record?.id === selectOrder?.id &&
-              isLoading.isLoading &&
+              isLoading?.isLoading &&
               isLoading.type === "재수정"
             }
             icon={<BsUpload />}

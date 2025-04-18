@@ -16,10 +16,27 @@ function OrderPage() {
   const [dayValue, setDayValue] = React.useState("전체");
   const [orders, setOrders] = React.useState([]);
 
+  const confirmOrder = (data) => {
+    console.log(data);
+
+    try {
+      axios
+        .put(`${API_URL}/order/${data.id}`, {
+          step: "주문확인완료",
+        })
+        .then((response) => console.log(response))
+        .catch((error) => {
+          console.log(error);
+        });
+    } catch (error) {
+      console.error("주문 수정 실패:", error);
+    }
+  };
+
   const getOrders = async (company, day) => {
     try {
-      const response = await axios.get(`${API_URL}/order/filter`, {
-        params: { company, day, step: ["신규", "샘플"] },
+      const response = await axios.get(`${API_URL}/order/new`, {
+        params: { company, day },
         paramsSerializer: (params) =>
           qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
       });
@@ -50,7 +67,9 @@ function OrderPage() {
       title: "완료",
       key: "complete",
       align: "center",
-      render: (_, record) => <Button>완료</Button>,
+      render: (_, record) => {
+        return <Button onClick={() => confirmOrder(record)}>완료</Button>;
+      },
       className: "highlight-header",
     },
     {

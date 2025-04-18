@@ -301,7 +301,7 @@ function ReOrder() {
           onClick={() => handleDownloadZipOrigin(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "원본"
           }
         >
@@ -317,7 +317,7 @@ function ReOrder() {
           onClick={() => handleDownloadZipPre(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "선작업"
           }
         >
@@ -333,7 +333,7 @@ function ReOrder() {
           onClick={() => handleDownloadZipFirstWork(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "1차보정"
           }
         >
@@ -371,7 +371,7 @@ function ReOrder() {
           <Button
             loading={
               record?.id === selectOrder?.id &&
-              isLoading.isLoading &&
+              isLoading?.isLoading &&
               isLoading.type === "재수정"
             }
           >

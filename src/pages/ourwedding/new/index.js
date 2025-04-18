@@ -98,6 +98,8 @@ function NewRequest() {
   const [comment, setComment] = useState();
   const [isLoading, setLoading] = useState();
 
+  const [isAllCheck, setAllCheck] = useState();
+
   const updateFile = async (e) => {
     try {
       const file = e.target.files[0];
@@ -308,10 +310,7 @@ function NewRequest() {
       referenceDownload: referenceFile?.downloadLink,
       company: "아워웨딩",
       division: formData.grade === "S 샘플" ? "샘플" : "신규",
-      step:
-        formData.grade === "S 샘플"
-          ? `샘플 작업중 (완료 예정일: ${deadline})`
-          : `1차 보정본 작업중 (완료 예정일: ${deadline})`,
+      step: "접수완료",
       comment: comment,
       label: formData.grade === "S 샘플" ? "샘플" : "신규",
     };
@@ -576,7 +575,7 @@ function NewRequest() {
               </Select>
             </Form.Item>
 
-            <Form.Item label={<strong>{"사진 장수"}</strong>} colon={false}>
+            {/* <Form.Item label={<strong>{"사진 장수"}</strong>} colon={false}>
               <Input
                 type="number"
                 name="photoCount"
@@ -585,7 +584,7 @@ function NewRequest() {
                 value={formData.photoCount}
                 onChange={handleInputChange}
               />
-            </Form.Item>
+            </Form.Item> */}
 
             <Form.Item
               label={<strong>{"추가 결제 여부"}</strong>}
@@ -1031,6 +1030,7 @@ ex) 셀카 or 스튜디오 보정본`}
             </Flex>
           </Flex>
           <Flex
+            gap={10}
             style={{
               alignItems: "center",
               justifyContent: "center",
@@ -1042,6 +1042,16 @@ ex) 셀카 or 스튜디오 보정본`}
             <Typography style={{ padding: 4 }}>
               • 위의 내용을 모두 숙지했습니다{" "}
             </Typography>
+            <Checkbox
+              onChange={(e) => {
+                console.log(e.target.checked);
+                if (e.target.checked) {
+                  setCheckedItems([true, true, true, true]);
+                } else {
+                  setCheckedItems([false, false, false, false]);
+                }
+              }}
+            ></Checkbox>
           </Flex>
         </Flex>
 

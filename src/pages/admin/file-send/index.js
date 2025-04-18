@@ -3,13 +3,14 @@ import {
   Col,
   Flex,
   message,
+  Popover,
   Segmented,
   Space,
   Table,
   Upload,
 } from "antd";
 import axios from "axios";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import qs from "qs";
 
 import JSZip from "jszip";
@@ -22,12 +23,22 @@ import {
 } from "firebase/storage";
 import { storage } from "../../../firebaseConfig";
 
+import dayjs from "dayjs";
+
 const API_URL = process.env.REACT_APP_API_URL;
 
 const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+};
+
+const GRADE_WORK_DAYS = {
+  "S 샘플": 4,
+  "1 씨앗": 7,
+  "2 새싹": 4,
+  "3 나무": 2,
+  "# 숲": 0.125, // 3시간 = 0.125일
 };
 
 function FileSend() {
@@ -55,49 +66,75 @@ function FileSend() {
     onSuccess("ok"); // 강제로 성공 처리
   };
 
-  const handlePhotoUpload = async ({ file, fileList }, order) => {
-    setLoading({ isLoading: true, type: "재수정" });
+  const uploadTimer = useRef(null);
+
+  const handlePhotoUpload = ({ file, fileList }, order) => {
     if (!order) return;
+
+    setLoading({ isLoading: true, type: "1차보정-업로드" });
     setSelectOrder(order);
-    if (file.status === "done") {
-      console.log("order :", order);
 
-      const file_ = await uploadFiles(fileList, order.userName, order.userId);
-      const downloadLinkAddr = file_.map((f) => f.downloadLink);
-
-      console.log(downloadLinkAddr);
-
-      const order_ = {
-        ...order,
-        photoCount: photoList.length,
-        reWorkDownload: downloadLinkAddr,
-        division: "재수정완료",
-      };
-
-      const { data } = await axios.put(
-        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
-        order_,
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      console.log(data);
-      setLoading({ isLoading: false, type: "1차보정" });
-      showMessage(
-        "success",
-        `${file.name} 사진이 성공적으로 업로드되었습니다.`
-      );
-
-      // 약간의 딜레이 후 새로고침 (사용자에게 메시지가 보이도록)
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } else if (file.status === "error") {
+    if (file.status === "error") {
       showMessage("error", `${file.name} 사진 업로드에 실패했습니다.`);
-      setLoading({ isLoading: false, type: "재수정" });
+      setLoading({ isLoading: false, type: "1차보정-업로드" });
     }
-    setPhotoList(fileList);
+
+    // 디바운스 처리로 여러 번 호출 방지
+    if (uploadTimer.current) clearTimeout(uploadTimer.current);
+
+    uploadTimer.current = setTimeout(() => {
+      const allDone = fileList.every((f) => f.status === "done");
+      if (allDone) {
+        setPhotoList(fileList); // 여기서 한 번만 처리
+        console.log("최종 order :", order);
+        // 여기서 handleUpload 호출해도 됨
+        // handleUpload();
+      }
+    }, 300); // 300ms 후 모든 업로드 완료됐을 때 한 번만 실행
+  };
+
+  useEffect(() => {
+    if (photoList && photoList.length > 0) {
+      handleUpload();
+    }
+  }, [photoList]);
+
+  const handleUpload = async () => {
+    const file_ = await uploadFiles(
+      photoList,
+      selectOrder.userName,
+      selectOrder.userId
+    );
+    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+
+    console.log(downloadLinkAddr);
+
+    const order_ = {
+      ...selectOrder,
+      photoCount: photoList.length,
+      firstWorkDownload: downloadLinkAddr,
+      division: "1차보정완료",
+    };
+
+    const { data } = await axios.put(
+      `${API_URL}/order/${selectOrder.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+      order_,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log(data);
+    // ✅ 성공 메시지
+    showMessage("success", "1차보정이 완료되었습니다.");
+
+    // ✅ 로딩 해제
+    setLoading({ isLoading: false, type: "1차보정-업로드" });
+
+    // ✅ 1초 후 새로고침
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   const uploadFiles = async (fileList, userName, userId) => {
@@ -107,9 +144,9 @@ function FileSend() {
         const fileExtension = fileObj.name.substring(
           fileObj.name.lastIndexOf(".")
         );
-        const rawFileName = `아워웨딩_선작업_${userName}_${userId}_${
-          index + 1
-        }${fileExtension}`;
+        const rawFileName = `${
+          selectOrder.company
+        }_1차보정_${userName}_${userId}_${index + 1}${fileExtension}`;
         const encodedFileName = encodeURIComponent(rawFileName);
 
         const storageRef = ref(storage, `temp/${encodedFileName}`);
@@ -143,6 +180,8 @@ function FileSend() {
   };
 
   const handleDownloadZipOrigin = async (record) => {
+    setLoading({ isLoading: true, type: "원본" });
+    setSelectOrder(record);
     try {
       const response = await axios.post(
         `${API_URL}/download-zip`,
@@ -159,6 +198,7 @@ function FileSend() {
     } catch (error) {
       console.error("ZIP 다운로드 실패:", error);
     }
+    setLoading({ isLoading: false, type: "원본" });
   };
 
   const handleDownloadZipPre = async (record) => {
@@ -257,24 +297,49 @@ function FileSend() {
       dataIndex: "userName",
       key: "userName",
       align: "center",
+      render: (_, record) => {
+        return (
+          <Popover
+            content={
+              <Flex vertical gap={10}>
+                <div>
+                  <strong>아이디</strong>
+                  <div>{record.userId}</div>
+                </div>
+                <div>
+                  <strong>상품주문번호</strong>
+                  <div>{record.orderNumber}</div>
+                </div>
+              </Flex>
+            }
+          >
+            <Button>{record.userName}</Button>
+          </Popover>
+        );
+      },
     },
     {
-      title: "아이디",
-      dataIndex: "userId",
-      key: "userId",
-      align: "center",
-    },
-    {
-      title: "상품주문번호",
-      dataIndex: "orderNumber",
-      key: "orderNumber",
-      align: "center",
-    },
-    {
-      title: "날짜",
+      title: "날짜(전송날짜)",
       dataIndex: "receivedDate",
       key: "receivedDate",
       align: "center",
+      render: (_, record) => {
+        const receivedDate = dayjs(record.receivedDate); // 예: '2025-04-19'
+        const workDays = GRADE_WORK_DAYS[record.grade] || 0;
+
+        // workDays가 1보다 작으면 시간으로 더하기 (예: 0.125일 = 3시간)
+        const sendDate =
+          workDays < 1
+            ? receivedDate.add(workDays * 24, "hour")
+            : receivedDate.add(workDays, "day");
+
+        return (
+          <div>
+            <div>{receivedDate.format("YYYY-MM-DD")}</div>
+            <div>{sendDate.format("YYYY-MM-DD")}</div>
+          </div>
+        );
+      },
     },
 
     {
@@ -301,7 +366,7 @@ function FileSend() {
           onClick={() => handleDownloadZipOrigin(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "원본"
           }
         >
@@ -317,7 +382,7 @@ function FileSend() {
           onClick={() => handleDownloadZipPre(record)}
           loading={
             record?.id === selectOrder?.id &&
-            isLoading.isLoading &&
+            isLoading?.isLoading &&
             isLoading.type === "선작업"
           }
         >
@@ -341,14 +406,46 @@ function FileSend() {
                 onClick={() => handleDownloadZipFirstWork(record)}
                 loading={
                   record?.id === selectOrder?.id &&
-                  isLoading.isLoading &&
+                  isLoading?.isLoading &&
                   isLoading.type === "1차보정"
                 }
               >
                 다운로드
               </Button>
 
-              <Button>업로드</Button>
+              <Upload
+                accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
+                multiple
+                onChange={(info) => handlePhotoUpload(info, record)} // order를 인자로 넘김
+                fileList={photoList}
+                showUploadList={false}
+                customRequest={customUpload}
+                beforeUpload={(file) => {
+                  const isValidType = [
+                    ".raw",
+                    ".jpeg",
+                    ".jpg",
+                    ".cr2",
+                    ".cr3",
+                    ".heic",
+                  ].some((ext) => file.name.toLowerCase().endsWith(ext));
+                  if (!isValidType) {
+                    showMessage("error", "지원하지 않는 파일 형식입니다");
+                    return Upload.LIST_IGNORE;
+                  }
+                  return true;
+                }}
+              >
+                <Button
+                  loading={
+                    record?.id === selectOrder?.id &&
+                    isLoading?.isLoading &&
+                    isLoading.type === "1차보정-업로드"
+                  }
+                >
+                  업로드
+                </Button>
+              </Upload>
             </Flex>
           )}
         </>
@@ -388,7 +485,7 @@ function FileSend() {
                   onClick={() => handleDownloadZipFirstWork(record)}
                   loading={
                     record?.id === selectOrder?.id &&
-                    isLoading.isLoading &&
+                    isLoading?.isLoading &&
                     isLoading.type === "재수정"
                   }
                 >

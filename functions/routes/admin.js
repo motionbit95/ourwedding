@@ -200,4 +200,39 @@ router.delete("/:admin_id", async (req, res) => {
   }
 });
 
+// 특정 관리자 정보 조회 엔드포인트
+router.get("/:admin_id", async (req, res) => {
+  const { admin_id } = req.params;
+
+  if (!admin_id) {
+    return res
+      .status(400)
+      .json({ code: -2013, message: "admin_id를 입력하세요." });
+  }
+
+  try {
+    const adminRef = db.ref("admins").child(admin_id);
+    const snapshot = await adminRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res
+        .status(404)
+        .json({ code: -2014, message: "해당 admin_id의 관리자가 없습니다." });
+    }
+
+    const adminData = snapshot.val();
+    const { admin_pw, ...safeData } = adminData;
+
+    res.status(200).json({
+      message: "관리자 정보 조회 성공",
+      admin: { id: admin_id, ...safeData },
+    });
+  } catch (error) {
+    res.status(500).json({
+      code: -2015,
+      message: "관리자 정보 조회 중 서버 오류가 발생했습니다.",
+    });
+  }
+});
+
 module.exports = router;

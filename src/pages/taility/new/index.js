@@ -309,10 +309,7 @@ function TailityNewRequest() {
       referenceDownload: referenceFile?.downloadLink,
       company: "테일리티",
       division: formData.grade === "S 샘플" ? "샘플" : "신규",
-      step:
-        formData.grade === "S 샘플"
-          ? `샘플 작업중 (완료 예정일: ${deadline})`
-          : `1차 보정본 작업중 (완료 예정일: ${deadline})`,
+      step: "접수완료",
       comment: comment,
       label: formData.grade === "S 샘플" ? "샘플" : "신규",
     };
