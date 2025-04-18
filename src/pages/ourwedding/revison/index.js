@@ -452,6 +452,7 @@ function RevisionRequest() {
                       type="primary"
                       iconPosition="end"
                       icon={<BsCaretRightFill />}
+                      disabled={!order.firstWorkDownload}
                     >
                       1차 보정본 다운로드
                     </Button>
@@ -460,6 +461,7 @@ function RevisionRequest() {
                       type="primary"
                       iconPosition="end"
                       icon={<BsCaretRightFill />}
+                      disabled={!order.secondWorkDownload}
                     >
                       최근 재수정본 다운로드
                     </Button>

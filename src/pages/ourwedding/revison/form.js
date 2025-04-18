@@ -275,7 +275,7 @@ function RevisionForm() {
       revisionDownload: downloadLinkAddr,
       company: "아워웨딩",
       division: "재수정",
-      step: `재수정 작업중 (완료 예정일: ${deadline})`,
+      step: `재수정 접수완료`,
       comment: comment,
       label: "재수정",
     };
@@ -292,7 +292,7 @@ function RevisionForm() {
       );
 
       if (data.success) {
-        alert(`✅ ${data.message}`);
+        alert(`✅ 재수정이 성공적으로 접수되었습니다.`);
       } else {
         alert("❌ 주문 저장 실패");
       }
@@ -815,6 +815,7 @@ function RevisionForm() {
             </Flex>
           </Flex>
           <Flex
+            gap={10}
             style={{
               alignItems: "center",
               justifyContent: "center",
@@ -826,6 +827,16 @@ function RevisionForm() {
             <Typography style={{ padding: 4 }}>
               • 위의 내용을 모두 숙지했습니다{" "}
             </Typography>
+            <Checkbox
+              onChange={(e) => {
+                console.log(e.target.checked);
+                if (e.target.checked) {
+                  setCheckedItems([true, true, true, true]);
+                } else {
+                  setCheckedItems([false, false, false, false]);
+                }
+              }}
+            ></Checkbox>
           </Flex>
         </Flex>
 
@@ -836,7 +847,7 @@ function RevisionForm() {
             icon={<BsCaretRightFill />}
             iconPosition="end"
             type="primary"
-            disabled={checkedItems.filter((item) => item).length < 4}
+            disabled={checkedItems.filter((item) => item).length < 3}
             style={{
               width: "auto",
               paddingInline: "16px",

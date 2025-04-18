@@ -1,6 +1,7 @@
 import { Button, Flex, InputNumber, message, Space } from "antd";
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
 
@@ -19,13 +20,15 @@ function Workable(props) {
     [messageApi]
   );
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     const fetchAdminInfo = async () => {
       try {
         const token = localStorage.getItem("admin-token"); // 또는 sessionStorage.getItem("token")
 
         if (!token) {
-          throw new Error("로그인 토큰이 없습니다.");
+          console.log("로그인 토큰이 없습니다.");
         }
 
         const response = await axios.get(`${API_URL}/admin/me`, {
@@ -40,6 +43,7 @@ function Workable(props) {
           "관리자 정보 조회 실패:",
           error.response?.data || error.message
         );
+        navigate("/admin/login");
         throw error;
       }
     };

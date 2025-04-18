@@ -1,6 +1,6 @@
 import { Button, Flex, message, Segmented, Space, Table, Upload } from "antd";
 import axios from "axios";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import qs from "qs";
 import {
   deleteObject,
@@ -11,6 +11,7 @@ import {
 import { storage } from "../../../firebaseConfig";
 import { saveAs } from "file-saver";
 import { BsDownload, BsUpload } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -21,6 +22,7 @@ const ADDITIONAL_OPTION_MAP = {
 };
 
 function WorkList() {
+  const navigate = useNavigate();
   const [alignValue, setAlignValue] = React.useState("전체");
   const [dayValue, setDayValue] = React.useState("전체");
   const [orders, setOrders] = React.useState([]);
@@ -45,49 +47,75 @@ function WorkList() {
     onSuccess("ok"); // 강제로 성공 처리
   };
 
-  const handlePhotoUpload = async ({ file, fileList }, order) => {
-    setLoading({ isLoading: true, type: "재수정" });
+  const uploadTimer = useRef(null);
+
+  const handlePhotoUpload = ({ file, fileList }, order) => {
     if (!order) return;
+
+    setLoading({ isLoading: true, type: "업로드" });
     setSelectOrder(order);
-    if (file.status === "done") {
-      console.log("order :", order);
 
-      const file_ = await uploadFiles(fileList, order.userName, order.userId);
-      const downloadLinkAddr = file_.map((f) => f.downloadLink);
-
-      console.log(downloadLinkAddr);
-
-      const order_ = {
-        ...order,
-        photoCount: photoList.length,
-        reWorkDownload: downloadLinkAddr,
-        division: "재수정완료",
-      };
-
-      const { data } = await axios.put(
-        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
-        order_,
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      console.log(data);
-      setLoading({ isLoading: false, type: "1차보정" });
-      showMessage(
-        "success",
-        `${file.name} 사진이 성공적으로 업로드되었습니다.`
-      );
-
-      // 약간의 딜레이 후 새로고침 (사용자에게 메시지가 보이도록)
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } else if (file.status === "error") {
+    if (file.status === "error") {
       showMessage("error", `${file.name} 사진 업로드에 실패했습니다.`);
-      setLoading({ isLoading: false, type: "재수정" });
+      setLoading({ isLoading: false, type: "업로드" });
     }
-    setPhotoList(fileList);
+
+    // 디바운스 처리로 여러 번 호출 방지
+    if (uploadTimer.current) clearTimeout(uploadTimer.current);
+
+    uploadTimer.current = setTimeout(() => {
+      const allDone = fileList.every((f) => f.status === "done");
+      if (allDone) {
+        setPhotoList(fileList); // 여기서 한 번만 처리
+        console.log("최종 order :", order);
+        // 여기서 handleUpload 호출해도 됨
+        // handleUpload();
+      }
+    }, 300); // 300ms 후 모든 업로드 완료됐을 때 한 번만 실행
+  };
+
+  useEffect(() => {
+    if (photoList && photoList.length > 0) {
+      handleUpload();
+    }
+  }, [photoList]);
+
+  const handleUpload = async () => {
+    const file_ = await uploadFiles(
+      photoList,
+      selectOrder.userName,
+      selectOrder.userId
+    );
+    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+
+    console.log(downloadLinkAddr);
+
+    const order_ = {
+      ...selectOrder,
+      photoCount: photoList.length,
+      firstWorkDownload: downloadLinkAddr,
+      division: selectOrder.label === "신규" ? "1차보정완료" : "재수정완료",
+    };
+
+    const { data } = await axios.put(
+      `${API_URL}/order/${selectOrder.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+      order_,
+      {
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    console.log(data);
+    // ✅ 성공 메시지
+    showMessage("success", "업로드가 완료되었습니다.");
+
+    // ✅ 로딩 해제
+    setLoading({ isLoading: false, type: "업로드" });
+
+    // ✅ 1초 후 새로고침
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   const uploadFiles = async (fileList, userName, userId) => {
@@ -97,9 +125,9 @@ function WorkList() {
         const fileExtension = fileObj.name.substring(
           fileObj.name.lastIndexOf(".")
         );
-        const rawFileName = `아워웨딩_선작업_${userName}_${userId}_${
-          index + 1
-        }${fileExtension}`;
+        const rawFileName = `${
+          selectOrder.company
+        }_선작업_${userName}_${userId}_${index + 1}${fileExtension}`;
         const encodedFileName = encodeURIComponent(rawFileName);
 
         const storageRef = ref(storage, `temp/${encodedFileName}`);
@@ -198,17 +226,12 @@ function WorkList() {
     setLoading({ isLoading: false, type: "1차보정" });
   };
 
-  const getOrders = async (company, day) => {
+  const getOrders = async (workerId) => {
     try {
-      const response = await axios.get(`${API_URL}/order/filter`, {
-        params: { company, day, step: ["신규", "샘플"] },
-        paramsSerializer: (params) =>
-          qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
-      });
+      const response = await axios.get(`${API_URL}/order/worker/${workerId}`);
 
       const data = response.data.orders;
 
-      // 배열이면 그대로, 객체면 변환
       const orderList = Array.isArray(data)
         ? data
         : Object.entries(data || {}).map(([id, order]) => ({
@@ -216,7 +239,7 @@ function WorkList() {
             ...order,
           }));
 
-      console.log(orderList);
+      console.log("📦 워커 주문 리스트:", orderList);
       setOrders(orderList);
     } catch (error) {
       console.error("주문 불러오기 실패:", error);
@@ -224,8 +247,33 @@ function WorkList() {
   };
 
   useEffect(() => {
-    getOrders(alignValue, dayValue);
-  }, [alignValue, dayValue]);
+    const fetchAdminInfo = async () => {
+      try {
+        const token = localStorage.getItem("admin-token"); // 또는 sessionStorage.getItem("token")
+
+        if (!token) {
+          console.log("로그인 토큰이 없습니다.");
+        }
+
+        const response = await axios.get(`${API_URL}/admin/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        getOrders(response.data.admin.admin_id); // 관리자 정보 반환
+      } catch (error) {
+        console.error(
+          "관리자 정보 조회 실패:",
+          error.response?.data || error.message
+        );
+        navigate("/admin/login");
+        throw error;
+      }
+    };
+
+    fetchAdminInfo();
+  }, []);
 
   const columns = [
     {
@@ -291,10 +339,11 @@ function WorkList() {
       ),
     },
     {
-      title: "1차보정본",
+      title: "1차보정본/재수정본",
       align: "center",
       render: (_, record) => (
         <Button
+          disabled={!(record.firstWorkDownload || record.secondWorkDownload)}
           onClick={() => handleDownloadZipFirstWork(record)}
           loading={
             record?.id === selectOrder?.id &&
@@ -308,7 +357,7 @@ function WorkList() {
       ),
     },
     {
-      title: "재수정본",
+      title: "업로드",
       align: "center",
       render: (_, record) => (
         <Upload
@@ -338,11 +387,11 @@ function WorkList() {
             loading={
               record?.id === selectOrder?.id &&
               isLoading?.isLoading &&
-              isLoading.type === "재수정"
+              isLoading.type === "업로드"
             }
-            icon={<BsUpload />}
+            // icon={<BsUpload />}
           >
-            {/* 업로드 */}
+            업로드
           </Button>
         </Upload>
       ),

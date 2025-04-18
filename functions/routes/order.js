@@ -257,4 +257,26 @@ router.get("/", async (req, res) => {
   }
 });
 
+// ✅ 특정 worker_id의 주문 목록 조회
+router.get("/worker/:workerId", async (req, res) => {
+  try {
+    const { workerId } = req.params;
+    const snapshot = await db.ref("orders").once("value");
+    const orderData = snapshot.val() || {};
+
+    // 해당 워커의 주문 전체 정보 추출
+    const matchedOrders = Object.entries(orderData)
+      .filter(([_, order]) => order.worker?.worker_id === workerId)
+      .map(([orderId, order]) => ({
+        id: orderId,
+        ...order,
+      }));
+
+    res.status(200).json({ success: true, orders: matchedOrders });
+  } catch (error) {
+    console.error("worker 주문 조회 실패:", error);
+    res.status(500).json({ success: false, message: "작업자 주문 조회 실패" });
+  }
+});
+
 module.exports = router;

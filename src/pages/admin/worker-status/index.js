@@ -104,6 +104,7 @@ function WorkerStatus() {
       photoCount: photoList.length,
       firstWorkDownload: downloadLinkAddr,
       division: "1차보정완료",
+      step: "1차보정완료",
     };
 
     const { data } = await axios.put(

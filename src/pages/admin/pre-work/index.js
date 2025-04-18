@@ -103,6 +103,7 @@ function PreWork() {
       photoCount: photoList.length,
       firstWorkDownload: downloadLinkAddr,
       division: selectOrder.label === "샘플" ? "샘플완료" : "1차보정완료",
+      step: selectOrder.label === "샘플" ? "샘플완료" : "1차보정완료",
     };
 
     const { data } = await axios.put(

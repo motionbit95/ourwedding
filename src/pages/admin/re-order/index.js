@@ -1,4 +1,14 @@
-import { Button, Flex, message, Segmented, Space, Table, Upload } from "antd";
+import {
+  Button,
+  Flex,
+  message,
+  Modal,
+  Popover,
+  Segmented,
+  Space,
+  Table,
+  Upload,
+} from "antd";
 import axios from "axios";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -11,6 +21,7 @@ import {
   uploadBytes,
 } from "firebase/storage";
 import { storage } from "../../../firebaseConfig";
+import { BsCheck, BsX } from "react-icons/bs";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -62,6 +73,7 @@ function ReOrder() {
         photoCount: photoList.length,
         reWorkDownload: downloadLinkAddr,
         division: "재수정완료",
+        step: "재수정완료",
       };
 
       const { data } = await axios.put(
@@ -220,7 +232,114 @@ function ReOrder() {
     getOrders(alignValue, dayValue);
   }, [alignValue, dayValue]);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+  const handleOk = () => {
+    if (!selectedWorker) {
+      message.warning("작업자를 선택해주세요.");
+      return;
+    }
+
+    console.log("선택된 작업자:", selectedWorker);
+    // 여기서 원하는 동작 실행 (예: 서버 전송, state 업데이트 등)
+    console.log(selectOrder);
+
+    axios
+      .put(`${API_URL}/order/${selectOrder.id}`, { worker: selectedWorker })
+      .then((response) => {
+        console.log(response);
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+
+    setIsModalOpen(false); // 모달 닫기
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  const [workers, setWorkers] = useState([]);
+  const [selectedWorker, setSelectedWorker] = useState(null);
+
+  useEffect(() => {
+    const getWorkers = async () => {
+      try {
+        const { data: workData } = await axios.get(`${API_URL}/work`);
+        const workEntries = Object.entries(workData);
+
+        // worker_id 기준으로 그룹화 및 총 photo_count 계산
+        const photoCountByWorker = {};
+        for (const [_, work] of workEntries) {
+          const { worker_id, photo_count = 0 } = work;
+          if (!photoCountByWorker[worker_id]) {
+            photoCountByWorker[worker_id] = 0;
+          }
+          photoCountByWorker[worker_id] += photo_count;
+        }
+
+        const uniqueWorkerIds = Object.keys(photoCountByWorker);
+
+        // 관리자 정보 요청
+        const workerPromises = uniqueWorkerIds.map((id) =>
+          axios.get(`${API_URL}/admin/${id}`).then((res) => res.data.admin)
+        );
+        const adminInfos = await Promise.all(workerPromises);
+
+        // 최종 결과 조합
+        const result = uniqueWorkerIds.map((worker_id, idx) => ({
+          worker_id,
+          admin_name: adminInfos[idx].admin_name,
+          photo_total: photoCountByWorker[worker_id],
+        }));
+
+        console.log("작업자별 총 사진 수:", result);
+        setWorkers(result);
+      } catch (error) {
+        console.error("작업자 정보 조회 실패:", error);
+      }
+    };
+
+    getWorkers();
+  }, []);
+
   const columns = [
+    {
+      title: "작업자 지정",
+      align: "center",
+      render: (_, record) =>
+        record.worker ? (
+          <Popover
+            content={
+              <div style={{ whiteSpace: "pre-line" }}>
+                {`${record.worker?.admin_name}(${record.worker?.worker_id})`}
+              </div>
+            }
+            title="작업자"
+          >
+            <Button
+              type={record.worker ? "primary" : "default"}
+              onClick={() => {
+                setSelectOrder(record);
+                showModal();
+              }}
+              icon={<BsCheck />}
+            ></Button>
+          </Popover>
+        ) : (
+          <Button
+            type={record.worker ? "primary" : "default"}
+            onClick={() => {
+              setSelectOrder(record);
+              showModal();
+            }}
+            icon={<BsX />}
+          ></Button>
+        ),
+    },
     {
       title: "업체",
       dataIndex: "company",
@@ -465,6 +584,46 @@ function ReOrder() {
           background-color: rgba(255, 250, 215, 1) !important;
         }
       `}</style>
+
+      <Modal
+        title="작업자 지정"
+        open={isModalOpen}
+        okText={"확인"}
+        cancelText={"취소"}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Table
+          rowKey="worker_id"
+          rowSelection={{
+            type: "radio", // 하나만 선택
+            onChange: (selectedRowKeys, selectedRows) => {
+              setSelectedWorker(selectedRows[0]);
+            },
+          }}
+          columns={[
+            {
+              title: "ID",
+              dataIndex: "worker_id",
+              key: "worker_id",
+              align: "center",
+            },
+            {
+              title: "이름",
+              dataIndex: "admin_name",
+              key: "admin_name",
+              align: "center",
+            },
+            {
+              title: "장수",
+              dataIndex: "photo_total",
+              key: "photo_total",
+              align: "center",
+            },
+          ]}
+          dataSource={workers}
+        />
+      </Modal>
     </div>
   );
 }

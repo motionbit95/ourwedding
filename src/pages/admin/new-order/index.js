@@ -11,6 +11,7 @@ import {
 import axios from "axios";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import qs from "qs";
+import dayjs from "dayjs";
 
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
@@ -111,6 +112,37 @@ function NewOrder() {
     }
   }, [photoList]);
 
+  // Constants
+  const GRADES = [
+    ["S 샘플", "4일이내"],
+    ["1 씨앗", "7일이내"],
+    ["2 새싹", "4일이내"],
+    ["3 나무", "2일이내"],
+    ["# 숲", "3시간이내"],
+  ];
+
+  // 등급에서 기간 가져오기
+  const getDurationByGrade = (grade) => {
+    const found = GRADES.find(([g]) => g === grade);
+    return found?.[1];
+  };
+
+  // 기간으로 deadline 구하기
+  const getDeadline = (duration) => {
+    const now = dayjs();
+
+    if (!duration) return "알 수 없음";
+
+    if (duration.includes("일")) {
+      const days = parseInt(duration);
+      return now.add(days, "day").format("YYYY-MM-DD");
+    } else if (duration.includes("시간")) {
+      const hours = parseInt(duration);
+      return now.add(hours, "hour").format("YYYY-MM-DD HH:mm");
+    }
+    return "알 수 없음";
+  };
+
   const handleUpload = async () => {
     const file_ = await uploadFiles(
       photoList,
@@ -121,11 +153,20 @@ function NewOrder() {
 
     console.log(downloadLinkAddr);
 
+    const duration = getDurationByGrade(selectOrder.grade);
+    const deadline = getDeadline(duration);
+
     const order_ = {
       ...selectOrder,
       photoCount: photoList.length,
       firstWorkDownload: downloadLinkAddr,
       division: "선작업",
+      step:
+        selectOrder.label === "샘플"
+          ? "작업 진행중"
+          : selectOrder.label === "신규"
+          ? `1차보정본 작업중 ${deadline}`
+          : `재수정 작업중 ${deadline}`,
     };
 
     const { data } = await axios.put(
