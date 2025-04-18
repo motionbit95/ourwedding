@@ -14,6 +14,7 @@ import NewOrder from "./new-order";
 import ReOrder from "./re-order";
 import PreWork from "./pre-work";
 import FileSend from "./file-send";
+import WorkerStatus from "./worker-status";
 
 const { Header, Content, Sider } = Layout;
 
@@ -128,6 +129,7 @@ const Dashboard = () => {
               <Route path="new-order" element={<NewOrder />} />
               <Route path="re-order" element={<ReOrder />} />
               <Route path="pre-work" element={<PreWork />} />
+              <Route path="worker-status" element={<WorkerStatus />} />
               <Route path="file-send" element={<FileSend />} />
             </Routes>
           </Content>

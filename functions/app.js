@@ -29,10 +29,12 @@ app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 const adminRoutes = require("./routes/admin");
 const authRoutes = require("./routes/auth");
 const orderRoutes = require("./routes/order");
+const workRoutes = require("./routes/work");
 
 app.use("/admin", adminRoutes);
 app.use("/auth", authRoutes);
 app.use("/order", orderRoutes);
+app.use("/work", workRoutes);
 app.use("/", require("./routes/downloader"));
 
 const { uploadByUrlHandler } = require("./routes/uploader");

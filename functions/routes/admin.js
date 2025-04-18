@@ -8,6 +8,50 @@ const db = admin.database();
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || "your_secret_key";
 
+// 관리자 토큰으로 정보 조회하는 엔드포인트
+router.get("/me", async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      code: -2010,
+      message: "Authorization 헤더가 없거나 형식이 올바르지 않습니다.",
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET_KEY);
+    const { admin_id } = decoded;
+
+    const adminRef = db.ref("admins").child(admin_id);
+    const snapshot = await adminRef.once("value");
+
+    if (!snapshot.exists()) {
+      return res.status(404).json({
+        code: -2011,
+        message: "존재하지 않는 관리자입니다.",
+      });
+    }
+
+    const adminData = snapshot.val();
+
+    // 민감 정보 제외 후 응답
+    const { admin_pw, ...safeData } = adminData;
+
+    res.status(200).json({
+      message: "관리자 정보 조회 성공",
+      admin: safeData,
+    });
+  } catch (error) {
+    res.status(401).json({
+      code: -2012,
+      message: "유효하지 않은 토큰입니다.",
+    });
+  }
+});
+
 // 관리자 회원가입 엔드포인트
 router.post("/signup", async (req, res) => {
   const {
