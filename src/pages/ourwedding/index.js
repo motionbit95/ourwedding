@@ -24,7 +24,9 @@ function Ourwedding() {
         }
       )
       .then(() => navigate(page))
-      .catch(() => navigate("login", { state: { nextPage: page } }));
+      .catch(() => {
+        navigate("login", { state: { nextPage: page } });
+      });
   };
 
   const customTheme = {

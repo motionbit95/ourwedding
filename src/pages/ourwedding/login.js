@@ -19,7 +19,10 @@ function Login() {
   const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
   const location = useLocation();
-  const nextPage = location.state?.nextPage;
+  const nextPage = location.state?.nextPage || "new"; // 기본값 설정
+
+  console.log("Location state:", location.state); // 디버깅용 로그
+  console.log("Next page:", nextPage); // 디버깅용 로그
 
   const [fontSize, setFontSize] = useState("20px");
   const [paddingBlock, setPaddingBlock] = useState("20px");
@@ -56,7 +59,14 @@ function Login() {
       .then((response) => {
         messageApi.success(response.data.message);
         localStorage.setItem("token", response.data.token);
-        navigate(`/ourwedding/${nextPage}`);
+        console.log("Token:", response.data.token);
+        console.log("Next page before navigation:", nextPage);
+
+        // 즉시 페이지 이동
+        navigate(`/ourwedding/${nextPage}`, {
+          replace: true,
+          state: { nextPage }, // state 유지
+        });
       })
       .catch((error) => {
         const { status, data } = error.response;

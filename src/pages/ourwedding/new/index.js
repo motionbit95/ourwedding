@@ -301,34 +301,39 @@ function NewRequest() {
 
   useEffect(() => {
     const verifyToken = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        navigation("/ourwedding/login", { state: { nextPage: "new" } });
+        return;
+      }
+
       try {
         const response = await axios.post(
           `${API_URL}/auth/verify-token`,
           {},
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
-        setUser(response.data.user);
+        const userData = response.data.user;
+        setUser(userData);
+        setFormData((prev) => ({
+          ...prev,
+          userName: userData.user_name || "",
+          userId: userData.naver_id || "",
+          receivedDate: new Date().toLocaleString(),
+        }));
       } catch (error) {
+        console.log("Token verification failed, redirecting to login");
+        localStorage.removeItem("token");
         navigation("/ourwedding/login", { state: { nextPage: "new" } });
       }
     };
     verifyToken();
   }, [navigation]);
-
-  useEffect(() => {
-    if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        userName: user.user_name || "",
-        userId: user.naver_id || "",
-        receivedDate: new Date().toLocaleString(),
-      }));
-    }
-  }, [user]);
 
   return (
     <ConfigProvider
