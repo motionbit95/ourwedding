@@ -14,6 +14,7 @@ import TailityNewRequest from "./pages/taility/new";
 import TailityRevisionRequest from "./pages/taility/revison";
 import TailityRevisionForm from "./pages/taility/revison/form";
 import WorkerDashboard from "./pages/worker";
+import SubmitResult from "./pages/ourwedding/components/common/Result";
 
 function App() {
   return (
@@ -30,6 +31,8 @@ function App() {
         <Route path="/taility/new" element={<TailityNewRequest />} />
         <Route path="/taility/revison" element={<TailityRevisionRequest />} />
         <Route path="/taility/revison/form" element={<TailityRevisionForm />} />
+
+        <Route path="/result/ourwedding" element={<SubmitResult />} />
 
         {/* 관리자 */}
         <Route path={"/admin/*"} element={<Dashboard />} />

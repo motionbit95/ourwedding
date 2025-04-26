@@ -59,12 +59,10 @@ const uploadByUrlHandler = async (req, res) => {
   try {
     const { fileUrl, originalFileName } = req.body;
     if (!fileUrl || !originalFileName) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "fileUrl 또는 originalFileName이 필요합니다.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "fileUrl 또는 originalFileName이 필요합니다.",
+      });
     }
 
     const response = await axios.get(fileUrl, { responseType: "arraybuffer" });
@@ -112,6 +110,7 @@ const uploadByUrlHandler = async (req, res) => {
       fileId: gDriveRes.data.id,
       viewLink: gDriveRes.data.webViewLink,
       downloadLink: gDriveRes.data.webContentLink,
+      originalFileName: decodeURIComponent(originalFileName),
     });
   } catch (err) {
     console.error("❌ 업로드 오류:", err);
