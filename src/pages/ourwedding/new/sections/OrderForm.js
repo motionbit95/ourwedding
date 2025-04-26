@@ -1,6 +1,7 @@
 import React from "react";
 import { Form, Input, Select, Checkbox, Typography, Flex } from "antd";
 import { theme } from "../../utils/theme";
+import { ADDITIONAL_OPTIONS, GRADES } from "../../constants";
 
 const { Title } = Typography;
 
@@ -10,20 +11,6 @@ const OrderForm = ({
   handleSelectChange,
   handleCheckboxChange,
 }) => {
-  const GRADES = [
-    ["S 샘플", "4일이내"],
-    ["1 씨앗", "7일이내"],
-    ["2 새싹", "4일이내"],
-    ["3 나무", "2일이내"],
-    ["# 숲", "3시간이내"],
-  ];
-
-  const ADDITIONAL_OPTIONS = [
-    ["film", "필름 추가", 1500],
-    ["person", "인원 추가", 2000],
-    ["edit", "합성", 2000],
-  ];
-
   return (
     <Form
       labelCol={{ span: 8 }}

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Typography, Checkbox, Flex } from "antd";
-import { theme } from "../../utils/theme";
+import { Flex, Typography, Checkbox, Button, Image } from "antd";
+import { BsCaretRight } from "react-icons/bs";
+import { theme } from "../../utils/theme"; // 사용자 테마 유틸
+import sImage from "../../../../asset/s.png"; // 이미지 경로
 
 const { Text } = Typography;
 
@@ -37,16 +39,21 @@ const CAUTION_ITEMS = [
   },
 ];
 
-const CautionSection = ({ checkedItems, handleCheck, setCheckedItems }) => {
+const CautionSection = ({
+  checkedItems,
+  handleCheck,
+  setCheckedItems,
+  handleFormUpload,
+}) => {
   const [fontSize, setFontSize] = useState(theme.typography.fontSize.lg);
 
   useEffect(() => {
     const updateFontSize = () => {
       const width = window.innerWidth;
       if (width < 992) {
-        setFontSize(theme.typography.fontSize.xxl);
+        setFontSize(theme.typography.fontSize.xl);
       } else {
-        setFontSize(theme.typography.fontSize.xxxl);
+        setFontSize(theme.typography.fontSize.xxl);
       }
     };
 
@@ -68,23 +75,31 @@ const CautionSection = ({ checkedItems, handleCheck, setCheckedItems }) => {
         style={{
           alignItems: "center",
           justifyContent: "center",
-          transform: "translateY(50%)",
+          marginBottom: -parseInt(fontSize.replace("px")),
           paddingInline: theme.spacing.lg,
+          marginTop: "10vh",
         }}
       >
-        <Text
+        <Flex
           style={{
             width: "100%",
             maxWidth: "900px",
-            color: "transparent",
-            WebkitTextStroke: "0.6px #A79166",
-            fontFamily: theme.typography.fontFamily.main,
-            fontWeight: 400,
-            fontSize,
           }}
         >
-          Caution
-        </Text>
+          <Typography
+            style={{
+              zIndex: 99,
+              paddingInline: "20px",
+              display: "inline",
+              fontFamily: "Castoro Titling",
+              fontWeight: 400,
+              fontSize: parseInt(fontSize.replace("px")) * 1.3,
+              backgroundColor: "white",
+            }}
+          >
+            Caution
+          </Typography>
+        </Flex>
       </Flex>
 
       <Flex
@@ -92,7 +107,7 @@ const CautionSection = ({ checkedItems, handleCheck, setCheckedItems }) => {
         style={{
           alignItems: "center",
           justifyContent: "center",
-          backgroundColor: "rgba(192, 176, 152, 0.3)",
+          borderBlock: "1px solid black",
           paddingBlock: theme.spacing.xl,
         }}
       >
@@ -143,15 +158,53 @@ const CautionSection = ({ checkedItems, handleCheck, setCheckedItems }) => {
         >
           <Text style={{ padding: 4 }}>• 위의 내용을 모두 숙지했습니다 </Text>
           <Checkbox
-            onChange={(e) => {
-              if (e.target.checked) {
-                setCheckedItems([true, true, true, true]);
-              } else {
-                setCheckedItems([false, false, false, false]);
-              }
-            }}
+            onChange={(e) =>
+              setCheckedItems(
+                Array(CAUTION_ITEMS.length).fill(e.target.checked)
+              )
+            }
+            checked={checkedItems.every(Boolean)}
           />
         </Flex>
+      </Flex>
+
+      <Flex
+        vertical
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+          marginTop: "36px",
+        }}
+      >
+        <Image
+          src={sImage}
+          preview={false}
+          style={{ width: 30, height: "auto" }}
+        />
+        <div
+          style={{
+            width: 1,
+            height: 50,
+            backgroundColor: "black",
+            marginTop: 10,
+          }}
+        />
+        <Button
+          onClick={handleFormUpload}
+          htmlType="submit"
+          icon={<BsCaretRight />}
+          iconPosition="end"
+          type="primary"
+          disabled={!checkedItems.every(Boolean)}
+          style={{
+            width: "auto",
+            paddingInline: "48px",
+            marginBottom: theme.spacing.xl,
+            fontFamily: "Baskervville",
+          }}
+        >
+          UPLOAD
+        </Button>
       </Flex>
     </Flex>
   );

@@ -22,75 +22,70 @@ import sImage from "../../asset/s.png";
 const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
 
 function TailityLogin(props) {
+  const [messageApi, contextHolder] = message.useMessage();
   const { useBreakpoint } = Grid;
   const screens = useBreakpoint();
-  const [messageApi, contextHolder] = message.useMessage();
-  const navigation = useNavigate();
+  const navigate = useNavigate();
   const location = useLocation();
-  const nextPage = location.state?.nextPage; // 'nextPage' 값에 접근
+  const nextPage = location.state?.nextPage || "new"; // 기본값 설정
 
-  const fontSize = screens.xs
-    ? "48px"
-    : screens.sm
-    ? "64px"
-    : screens.md
-    ? "128px"
-    : screens.lg
-    ? "128px"
-    : "20px";
+  console.log("Location state:", location.state); // 디버깅용 로그
+  console.log("Next page:", nextPage); // 디버깅용 로그
 
-  const paddingBlock = screens.xs
-    ? "60px"
-    : screens.sm
-    ? "80px"
-    : screens.md
-    ? "100px"
-    : screens.lg
-    ? "120px"
-    : "20px";
+  const [fontSize, setFontSize] = useState("20px");
+  const [paddingBlock, setPaddingBlock] = useState("20px");
 
+  useEffect(() => {
+    const updateSizes = () => {
+      const width = window.innerWidth;
+
+      if (width < 480) {
+        setFontSize("18px");
+        setPaddingBlock("60px");
+      } else if (width < 768) {
+        setFontSize("24px");
+        setPaddingBlock("80px");
+      } else if (width < 1024) {
+        setFontSize("36px");
+        setPaddingBlock("100px");
+      } else {
+        setFontSize("48px");
+        setPaddingBlock("120px");
+      }
+    };
+
+    updateSizes(); // 초기값 설정
+    window.addEventListener("resize", updateSizes);
+
+    return () => window.removeEventListener("resize", updateSizes);
+  }, []);
+
+  // ✅ 로그인 시도
   const onFinish = (values) => {
     axios
       .post(`${API_URL}/auth/login`, values)
       .then((response) => {
-        messageApi.open({
-          type: "success",
-          content: response.data.message,
-        });
-
-        // 토큰 저장
+        messageApi.success(response.data.message);
         localStorage.setItem("token", response.data.token);
-        // 로그인 성공
-        navigation(`/taility/${nextPage}`);
+        console.log("Token:", response.data.token);
+        console.log("Next page before navigation:", nextPage);
+
+        // 즉시 페이지 이동
+        navigate(`/taility/${nextPage}`, {
+          replace: true,
+          state: { nextPage }, // state 유지
+        });
       })
       .catch((error) => {
-        if (error.response.status === 400) {
-          if (error.response.data.code === -1001) {
-            // 정보가 없음 - 회원가입 후 이동
-            axios
-              .post(`${API_URL}/auth/signup`, values)
-              .then((response) => {
-                // messageApi.open({
-                //   type: "success",
-                //   content: response.data.message,
-                // });
-                onFinish(values);
-              })
-              .catch((error) => {
-                // 응답 오류 - 메세지 박스 표시
-                messageApi.open({
-                  type: "error",
-                  content: error.response.data.message,
-                });
-              });
-
-            return;
-          }
-          // 응답 오류 - 메세지 박스 표시
-          messageApi.open({
-            type: "error",
-            content: error.response.data.message,
-          });
+        const { status, data } = error.response;
+        if (status === 400 && data.code === -1001) {
+          // 🔄 사용자 없을 경우 회원가입 → 재시도
+          axios
+            .post(`${API_URL}/auth/signup`, values)
+            .then(() => onFinish(values))
+            .catch((err) => messageApi.error(err.response.data.message));
+        } else {
+          messageApi.error(data.message);
         }
       });
   };

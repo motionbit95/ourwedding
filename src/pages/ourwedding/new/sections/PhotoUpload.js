@@ -35,13 +35,13 @@ const PhotoUpload = ({
           backgroundColor: theme.colors.background,
         }}
       >
-        <Paragraph style={{ color: theme.colors.label }}>
+        <Typography.Paragraph style={{ color: theme.colors.label }}>
           {title === "사진 업로드" ? (
             <Flex vertical gap="large">
               <li style={{ whiteSpace: "pre-line" }}>
                 {`파일 업로드는 raw / jpeg / jpg / cr2 / cr3 / heic만 가능합니다.
                ㄴ 그 이외에 파일은 해당 사이트에서 파일 변환하여 업로드바랍니다. `}
-                <Text
+                <Typography.Link
                   style={{
                     color: theme.colors.error,
                     fontWeight: 700,
@@ -49,7 +49,7 @@ const PhotoUpload = ({
                   onClick={() => window.open("https://convertio.co/kr/")}
                 >
                   Convertio — 파일 변환기
-                </Text>
+                </Typography.Link>
                 {" : 파일전환 페이지"}
               </li>
 
@@ -75,7 +75,7 @@ ex) 셀카 or 스튜디오 보정본`}
               </li>
             </Flex>
           )}
-        </Paragraph>
+        </Typography.Paragraph>
       </div>
 
       <Space

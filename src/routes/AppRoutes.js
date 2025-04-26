@@ -11,7 +11,7 @@ import useAuth from "../hooks/useAuth";
 
 // Ourwedding 페이지 컴포넌트
 import Ourwedding from "../pages/ourwedding";
-import NewRequest from "../pages/ourwedding/new";
+import NewOrderPage from "../pages/ourwedding/new";
 import RevisionRequest from "../pages/ourwedding/revison";
 import Login from "../pages/ourwedding/login";
 import RevisionForm from "../pages/ourwedding/revison/form";
@@ -19,7 +19,7 @@ import RevisionForm from "../pages/ourwedding/revison/form";
 // Taility 페이지 컴포넌트
 import Taility from "../pages/taility";
 import TailityLogin from "../pages/taility/login";
-import TailityNewRequest from "../pages/taility/new";
+import TailityNewOrderPage from "../pages/taility/new";
 import TailityRevisionRequest from "../pages/taility/revison";
 import TailityRevisionForm from "../pages/taility/revison/form";
 
@@ -55,7 +55,7 @@ const AppRoutes = () => {
             isAuthenticated={!!localStorage.getItem("token")}
             userType="ourwedding"
           >
-            <NewRequest />
+            <NewOrderPage />
           </ProtectedRoute>
         }
       />
@@ -83,26 +83,16 @@ const AppRoutes = () => {
       />
 
       {/* Taility 라우트 */}
-      <Route
-        path={TAILITY.BASE}
-        element={
-          <ProtectedRoute
-            isAuthenticated={tailityAuth.isAuthenticated}
-            userType="taility"
-          >
-            <Taility />
-          </ProtectedRoute>
-        }
-      />
+      <Route path={TAILITY.BASE} element={<Taility />} />
       <Route path={TAILITY.LOGIN} element={<TailityLogin />} />
       <Route
         path={TAILITY.NEW}
         element={
           <ProtectedRoute
-            isAuthenticated={tailityAuth.isAuthenticated}
+            isAuthenticated={!!localStorage.getItem("token")}
             userType="taility"
           >
-            <TailityNewRequest />
+            <TailityNewOrderPage />
           </ProtectedRoute>
         }
       />
@@ -110,7 +100,7 @@ const AppRoutes = () => {
         path={TAILITY.REVISION}
         element={
           <ProtectedRoute
-            isAuthenticated={tailityAuth.isAuthenticated}
+            isAuthenticated={!!localStorage.getItem("token")}
             userType="taility"
           >
             <TailityRevisionRequest />
@@ -121,7 +111,7 @@ const AppRoutes = () => {
         path={TAILITY.REVISION_FORM}
         element={
           <ProtectedRoute
-            isAuthenticated={tailityAuth.isAuthenticated}
+            isAuthenticated={!!localStorage.getItem("token")}
             userType="taility"
           >
             <TailityRevisionForm />

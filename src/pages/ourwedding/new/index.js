@@ -5,10 +5,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import dayjs from "dayjs";
 
-import OrderForm from "../components/order/OrderForm";
-import PhotoUpload from "../components/order/PhotoUpload";
-import RequestForm from "../components/order/RequestForm";
-import CautionSection from "../components/order/CautionSection";
+import OrderForm from "./sections/OrderForm";
+import PhotoUpload from "./sections/PhotoUpload";
+import RequestForm from "./sections/RequestForm";
+import CautionSection from "./sections/CautionSection";
 import CustomDivider from "../components/common/Divider";
 import { theme } from "../utils/theme";
 import {
@@ -22,12 +22,12 @@ import { storage } from "../../../firebaseConfig";
 const API_URL = process.env.REACT_APP_API_URL;
 
 /**
- * NewRequest Component
+ * NewOrderPage Component
  *
  * This component handles the creation of new wedding photo requests.
  * It includes form submission, photo uploads, and user verification.
  */
-function NewRequest() {
+function NewOrderPage() {
   const navigation = useNavigate();
   const [user, setUser] = useState();
   const [isLoading, setLoading] = useState(false);
@@ -524,4 +524,4 @@ function NewRequest() {
   );
 }
 
-export default NewRequest;
+export default NewOrderPage;

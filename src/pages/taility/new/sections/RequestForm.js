@@ -1,28 +1,54 @@
-import React from "react";
-import { Modal, Button, Typography, Space, Flex, Input } from "antd";
-import { MdAttachFile } from "react-icons/md";
-import { theme } from "../../utils/theme";
+import React, { useState } from "react";
+import { Flex, Typography, Space, Button, Modal, Input } from "antd";
+import { showMessage } from "../../utils/messageUtils";
+import { REQUEST_TEMPLATE } from "../../constants";
 
-const { Title, Paragraph } = Typography;
-
-const RequestForm = ({ setComment }) => {
+const RequestForm = ({ setComment, paddingBox }) => {
   return (
-    <Flex vertical gap="middle">
-      <Space>
-        <Title level={4} style={{ margin: "0 0 3px 0" }}>
-          요청사항 작성
-        </Title>
-        <MdAttachFile size={18} />
+    <Flex
+      vertical
+      gap={"middle"}
+      style={{
+        justifyContent: "center",
+        maxWidth: "900px",
+        width: "100%",
+      }}
+    >
+      <Space style={{ justifyContent: "space-between" }}>
+        <Space>
+          <Typography.Title
+            level={4}
+            style={{ margin: "0 0 3px 0", fontFamily: "Baskervville" }}
+          >
+            Requests fill in
+          </Typography.Title>
+          <Typography>요청사항 작성</Typography>
+        </Space>
       </Space>
-
       <div
         style={{
-          padding: theme.spacing.lg,
-          backgroundColor: theme.colors.background,
+          padding: paddingBox,
+          border: "1px solid black",
+          borderRight: "none",
+          position: "relative",
         }}
       >
-        <Paragraph style={{ color: theme.colors.text }}>
-          <Flex vertical gap="large">
+        <img
+          src={require("../../../../asset/s.png")}
+          alt="decoration"
+          style={{
+            position: "absolute",
+            left: "-10px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            width: "20px",
+            height: "auto",
+            backgroundColor: "white",
+            zIndex: 1,
+          }}
+        />
+        <Typography.Paragraph style={{ color: "black" }}>
+          <Flex vertical gap={"large"}>
             <li style={{ whiteSpace: "pre-line" }}>
               {`상단 [요청사항] 클릭 시 작성해야 될 텍스트가 복사되니, 텍스트를 기반으로 요청사항 작성해주세요.`}
             </li>
@@ -50,12 +76,12 @@ const RequestForm = ({ setComment }) => {
               {`접수 이후 요청사항 추가는 불가능하니, 빠진 부분이 없는지 재차 확인 부탁 드립니다.`}
             </li>
           </Flex>
-        </Paragraph>
+        </Typography.Paragraph>
       </div>
 
       <Input.TextArea
         style={{ backgroundColor: "#f1f1f1", minHeight: 300 }}
-        autoSize={true}
+        autoSize={false}
         onChange={(e) => setComment(e.target.value)}
         defaultValue={`1. 보정강도 (약,약중,중,중강,강)
 (추천 : 자연스러운 보정을 위해 생각하시는 보정단계보다 한단계 낮춰서 진행 하시는걸 추천드립니다 ! )
@@ -66,7 +92,7 @@ const RequestForm = ({ setComment }) => {
 신랑 :
 신부 :
 3. 개별 추가 요청사항
-(밝기 조절은 기재 해주시면 가능합니다.) (색감작업은 아워웨딩 유료 필름 결제 해주셔야 합니다.)
+(밝기 조절은 기재 해주시면 가능합니다.) (색감작업은 테일리티 유료 필름 결제 해주셔야 합니다.)
 
 ▶️ 파일명 - 요청사항 :`}
       />

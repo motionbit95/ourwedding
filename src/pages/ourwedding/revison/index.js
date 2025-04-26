@@ -4,10 +4,10 @@ import { BsCaretRightFill } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-import OrderForm from "../components/order/OrderForm";
-import PhotoUpload from "../components/order/PhotoUpload";
-import RequestForm from "../components/order/RequestForm";
-import CautionSection from "../components/order/CautionSection";
+import OrderForm from "../new/sections/OrderForm";
+import PhotoUpload from "../new/sections/PhotoUpload";
+import RequestForm from "../new/sections/RequestForm";
+import CautionSection from "../new/sections/CautionSection";
 import CustomDivider from "../components/common/Divider";
 import { theme } from "../utils/theme";
 import { useResponsiveStyles } from "../hooks/useResponsiveStyles";
