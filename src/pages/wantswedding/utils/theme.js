@@ -22,7 +22,7 @@ export const theme = {
   },
   typography: {
     fontFamily: {
-      main: "Rufina",
+      main: "Lilita One",
       primary: "'Rufina', serif",
       secondary: "'Noto Sans KR', sans-serif",
     },

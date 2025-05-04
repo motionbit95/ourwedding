@@ -15,8 +15,8 @@ export const WANTSWEDDING = {
   BASE: "/wantswedding",
   LOGIN: "/wantswedding/login",
   NEW: "/wantswedding/new",
-  REVISION: "/ourwedding/revison",
-  REVISION_FORM: "/ourwedding/revison/form",
+  REVISION: "/wantswedding/revison",
+  REVISION_FORM: "/wantswedding/revison/form",
 };
 
 // Taility 라우트

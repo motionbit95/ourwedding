@@ -206,7 +206,7 @@ function WantsNewOrderPage() {
         setUploadProgress(100);
         showMessage("success", `주문이 성공적으로 저장되었습니다! `);
 
-        // navigation("/result/ourwedding");
+        // navigation("/result/wantswedding");
       } else {
         showMessage("error", "주문 저장 실패");
       }
@@ -304,7 +304,7 @@ function WantsNewOrderPage() {
       const token = localStorage.getItem("token");
       if (!token) {
         console.log("No token found, redirecting to login");
-        navigation("/ourwedding/login", { state: { nextPage: "new" } });
+        navigation("/wantswedding/login", { state: { nextPage: "new" } });
         return;
       }
 
@@ -329,7 +329,7 @@ function WantsNewOrderPage() {
       } catch (error) {
         console.log("Token verification failed, redirecting to login");
         localStorage.removeItem("token");
-        navigation("/ourwedding/login", { state: { nextPage: "new" } });
+        navigation("/wantswedding/login", { state: { nextPage: "new" } });
       }
     };
     verifyToken();
@@ -441,6 +441,7 @@ function WantsNewOrderPage() {
             position: "relative",
             justifyContent: "center",
             alignItems: "center",
+            padding: "20px",
           }}
           vertical
         >

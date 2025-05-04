@@ -14,6 +14,8 @@ import useAuth from "../hooks/useAuth";
 import WantsWedding from "../pages/wantswedding";
 import WantsLogin from "../pages/wantswedding/login";
 import WantsNewOrderPage from "../pages/wantswedding/new";
+import WantsRevisionRequest from "../pages/wantswedding/revison";
+import WantsRevisionForm from "../pages/wantswedding/revison/form";
 
 // Ourwedding 페이지 컴포넌트
 import Ourwedding from "../pages/ourwedding";
@@ -59,6 +61,28 @@ const AppRoutes = () => {
             userType="wantswedding"
           >
             <WantsNewOrderPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={WANTSWEDDING.REVISION}
+        element={
+          <ProtectedRoute
+            isAuthenticated={!!localStorage.getItem("token")}
+            userType="wantswedding"
+          >
+            <WantsRevisionRequest />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={WANTSWEDDING.REVISION_FORM}
+        element={
+          <ProtectedRoute
+            isAuthenticated={!!localStorage.getItem("token")}
+            userType="wantswedding"
+          >
+            <WantsRevisionForm />
           </ProtectedRoute>
         }
       />

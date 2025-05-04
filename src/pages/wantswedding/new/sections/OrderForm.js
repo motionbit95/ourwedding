@@ -69,7 +69,7 @@ const OrderForm = ({
               WebkitTextStroke: "0.5px #4DA0FF",
             }}
           >
-            Want's Wedding
+            Wan't Wedding
           </Typography>
           <Typography
             style={{
