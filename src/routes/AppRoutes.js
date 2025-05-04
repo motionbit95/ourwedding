@@ -2,12 +2,18 @@ import { Routes, Route } from "react-router-dom";
 import {
   OURWEDDING,
   TAILITY,
+  WANTSWEDDING,
   ADMIN,
   WORKER,
   COMMON,
 } from "../constants/routes";
 import ProtectedRoute from "../components/common/ProtectedRoute";
 import useAuth from "../hooks/useAuth";
+
+// WantsWedding 페이지 컴포넌트
+import WantsWedding from "../pages/wantswedding";
+import WantsLogin from "../pages/wantswedding/login";
+import WantsNewOrderPage from "../pages/wantswedding/new";
 
 // Ourwedding 페이지 컴포넌트
 import Ourwedding from "../pages/ourwedding";
@@ -39,12 +45,24 @@ import SubmitResult from "../pages/ourwedding/components/common/Result";
  * 각 섹션별로 라우트를 그룹화하여 관리합니다.
  */
 const AppRoutes = () => {
-  const ourweddingAuth = useAuth("ourwedding");
-  const tailityAuth = useAuth("taility");
   const adminAuth = useAuth("admin");
 
   return (
     <Routes>
+      <Route path={WANTSWEDDING.BASE} element={<WantsWedding />} />
+      <Route path={WANTSWEDDING.LOGIN} element={<WantsLogin />} />
+      <Route
+        path={WANTSWEDDING.NEW}
+        element={
+          <ProtectedRoute
+            isAuthenticated={!!localStorage.getItem("token")}
+            userType="wantswedding"
+          >
+            <WantsNewOrderPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Ourwedding 라우트 */}
       <Route path={OURWEDDING.BASE} element={<Ourwedding />} />
       <Route path={OURWEDDING.LOGIN} element={<Login />} />

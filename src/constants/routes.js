@@ -11,6 +11,14 @@ export const OURWEDDING = {
   REVISION_FORM: "/ourwedding/revison/form",
 };
 
+export const WANTSWEDDING = {
+  BASE: "/wantswedding",
+  LOGIN: "/wantswedding/login",
+  NEW: "/wantswedding/new",
+  REVISION: "/ourwedding/revison",
+  REVISION_FORM: "/ourwedding/revison/form",
+};
+
 // Taility 라우트
 export const TAILITY = {
   BASE: "/taility",
