@@ -224,6 +224,7 @@ const NewOrderPage = () => {
         step: "접수완료",
         comment: comment,
         label: formData.grade === "S 샘플" ? "샘플" : "신규",
+        deadline,
       };
 
       setUploadProgress(90);

@@ -38,12 +38,11 @@ import dayjs from "dayjs";
 const API_URL = process.env.REACT_APP_API_URL; // ✅ 환경 변수 사용
 
 // Constants
-const GRADES = [
-  ["S 샘플", "4일이내"],
-  ["1 씨앗", "7일이내"],
-  ["2 새싹", "4일이내"],
-  ["3 나무", "2일이내"],
-  ["# 숲", "3시간이내"],
+export const GRADES = [
+  ["샘플", "4일"],
+  ["~4일까지", "4일"],
+  ["~48시간안에", "48시간"],
+  ["당일 6시간 안에(3장이상부터)", "6시간"],
 ];
 
 const ADDITIONAL_OPTIONS = [
@@ -280,6 +279,7 @@ function TailityRevisionForm() {
       step: `재수정 접수완료`,
       comment: comment,
       label: "재수정",
+      deadline,
     };
 
     console.log(order_, order.id);

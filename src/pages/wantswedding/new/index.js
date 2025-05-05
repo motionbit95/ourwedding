@@ -120,11 +120,8 @@ function WantsNewOrderPage() {
 
   const getDurationByGrade = (grade) => {
     const GRADES = [
-      ["S 샘플", "4일이내"],
-      ["1 씨앗", "7일이내"],
-      ["2 새싹", "4일이내"],
-      ["3 나무", "2일이내"],
-      ["# 숲", "3시간이내"],
+      ["~4일", "기본"],
+      ["~48시간", "추가금 : 1500원"],
     ];
     const found = GRADES.find(([g]) => g === grade);
     return found?.[1];

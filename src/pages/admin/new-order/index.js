@@ -1,9 +1,13 @@
 import {
   Button,
+  DatePicker,
   Flex,
+  Form,
   message,
+  Modal,
   Popover,
   Segmented,
+  Select,
   Space,
   Table,
   Upload,
@@ -24,6 +28,8 @@ import {
 import { storage } from "../../../firebaseConfig";
 
 const API_URL = process.env.REACT_APP_API_URL;
+
+const { Option } = Select;
 
 const ADDITIONAL_OPTION_MAP = {
   film: "필름",
@@ -118,17 +124,29 @@ function NewOrder() {
   }, [photoList]);
 
   // Constants
-  const GRADES = [
-    ["S 샘플", "4일이내"],
-    ["1 씨앗", "7일이내"],
-    ["2 새싹", "4일이내"],
-    ["3 나무", "2일이내"],
-    ["# 숲", "3시간이내"],
-  ];
+  const GRADES = {
+    원츠웨딩: [
+      ["샘플", "4일"],
+      ["~4일까지", "4일"],
+      ["~48시간안에", "48시간"],
+      ["당일 6시간 안에(3장이상부터)", "6시간"],
+    ],
+    아워웨딩: [
+      ["S 샘플", "4일이내"],
+      ["1 씨앗", "7일이내"],
+      ["2 새싹", "4일이내"],
+      ["3 나무", "2일이내"],
+      ["# 숲", "3시간이내"],
+    ],
+    테일리티: [
+      ["~4일", "기본"],
+      ["~48시간", "추가금 : 1500원"],
+    ],
+  };
 
   // 등급에서 기간 가져오기
-  const getDurationByGrade = (grade) => {
-    const found = GRADES.find(([g]) => g === grade);
+  const getDurationByGrade = (company, grade) => {
+    const found = GRADES[company].find(([g]) => g === grade);
     return found?.[1];
   };
 
@@ -162,7 +180,7 @@ function NewOrder() {
 
     console.log(downloadLinkAddr);
 
-    const duration = getDurationByGrade(selectOrder.grade);
+    const duration = getDurationByGrade(selectOrder.company, selectOrder.grade);
     const deadline = getDeadline(duration);
 
     const order_ = {
@@ -270,6 +288,61 @@ function NewOrder() {
     getOrders(alignValue, dayValue);
   }, [alignValue, dayValue]);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  const [form] = Form.useForm();
+
+  const handleEditClick = (record) => {
+    setEditingRecord(record);
+    form.setFieldsValue({
+      deadline: dayjs(record.deadline),
+      grade: record.grade,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOk = async () => {
+    try {
+      const { data } = await axios.put(
+        `${API_URL}/order/${editingRecord.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+        {
+          ...editingRecord,
+          deadline: form
+            .getFieldValue("deadline")
+            .format("YYYY-MM-DD hh:mm:ss"),
+          grade: form.getFieldValue("grade"),
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (data.success) {
+        alert(`✅ ${data.message}`);
+      } else {
+        alert("❌ 주문 저장 실패");
+      }
+    } catch (error) {
+      console.error("❌ 오류 발생:", error);
+      alert("🚨 서버 오류");
+    }
+
+    form.validateFields().then(async (values) => {
+      const updated = orders.map((order) =>
+        order.id === editingRecord.id
+          ? {
+              ...order,
+              deadline: values.deadline.format("YYYY-MM-DD hh:mm:ss"),
+              grade: values.grade,
+            }
+          : order
+      );
+      setOrders(updated);
+
+      setIsModalOpen(false);
+    });
+  };
+
   const columns = [
     {
       title: "업체",
@@ -353,6 +426,7 @@ function NewOrder() {
       className: "highlight-header",
       render: (_, record) => (
         <Button
+          size="small"
           onClick={() => handleDownloadZip(record)}
           loading={
             record?.id === selectOrder?.id &&
@@ -393,6 +467,7 @@ function NewOrder() {
           }}
         >
           <Button
+            size="small"
             loading={
               record?.id === selectOrder?.id &&
               isLoading?.isLoading &&
@@ -402,6 +477,16 @@ function NewOrder() {
             업로드
           </Button>
         </Upload>
+      ),
+    },
+    {
+      title: "수정",
+      key: "action",
+      align: "center",
+      render: (_, record) => (
+        <Button size="small" onClick={() => handleEditClick(record)}>
+          수정
+        </Button>
       ),
     },
   ];
@@ -471,6 +556,41 @@ function NewOrder() {
           scroll={{ x: "max-content" }} // 👉 가로 스크롤
         />
       </div>
+
+      <Modal
+        open={isModalOpen}
+        title="항목 수정"
+        onCancel={() => setIsModalOpen(false)}
+        onOk={handleOk}
+        okText="확인"
+        cancelText="취소"
+      >
+        <Form form={form} layout="vertical">
+          <Form.Item
+            name="deadline"
+            label="날짜"
+            rules={[{ required: true, message: "날짜를 선택해주세요" }]}
+          >
+            <DatePicker
+              format="YYYY-MM-DD hh:mm:ss"
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+          <Form.Item
+            name="grade"
+            label="등급"
+            rules={[{ required: true, message: "등급을 선택해주세요" }]}
+          >
+            <Select placeholder="등급 선택">
+              {GRADES[editingRecord?.company]?.map(([grade, time]) => (
+                <Select.Option key={grade} value={grade}>
+                  {`${grade}`}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       <style jsx>{`
         .sample-row {
