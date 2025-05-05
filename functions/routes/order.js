@@ -47,6 +47,12 @@ const GRADE_WORK_DAYS = {
   "2 새싹": 4,
   "3 나무": 2,
   "# 숲": 0.125, // 3시간 = 0.125일
+  "~48시간안에": 2,
+  "~4일까지": 4,
+  샘플: 4,
+  "당일 6시간 안에(3장이상부터)": 0.25, // 3시간 = 0.25일
+  "~48시간": 2,
+  "~4일": 4,
 };
 
 router.get("/new", async (req, res) => {
@@ -60,15 +66,17 @@ router.get("/new", async (req, res) => {
     const now = dayjs();
     const dayLimit = day === "전체" ? null : parseInt(day);
 
-    const stepList = ["접수완료"];
+    const stepList = ["신규", "샘플"];
 
     const filteredOrders = Object.entries(orders || {})
       .filter(([id, order]) => {
         const orderCompany = order.company;
         const orderGrade = order.grade;
-        const orderStep = order.step; // <- 수정된 부분
+        const orderStep = order.division; // <- 수정된 부분
         const receivedDate = dayjs(order.receivedDate);
         const workDays = GRADE_WORK_DAYS[orderGrade];
+
+        console.log(orderGrade, receivedDate.isValid(), workDays);
 
         if (!receivedDate.isValid() || workDays === undefined) return false;
 
@@ -114,11 +122,14 @@ router.get("/filter", async (req, res) => {
       "샘플",
       "신규",
       "재수정",
+      "선작업",
+      "주문확인완료",
       "1차보정완료",
       "재수정완료",
     ];
 
     const queryStep = step;
+
     const stepList = Array.isArray(queryStep)
       ? queryStep.filter((s) => s !== "접수완료")
       : queryStep === "전체" || !queryStep
@@ -126,6 +137,8 @@ router.get("/filter", async (req, res) => {
       : queryStep === "접수완료"
       ? [] // "접수완료"만 있을 경우 아무것도 보여주지 않음
       : [queryStep];
+
+    console.log(stepList);
 
     const filteredOrders = Object.entries(orders || {})
       .filter(([id, order]) => {

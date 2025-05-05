@@ -29,7 +29,13 @@ const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+  skin: "피부",
+  body: "체형(+얼굴)",
+  filter: "필터",
+  background: "배경 보정",
+  retouch: "리터치",
 };
+
 function PreWork() {
   const [alignValue, setAlignValue] = React.useState("전체");
   const [dayValue, setDayValue] = React.useState("전체");
@@ -94,14 +100,18 @@ function PreWork() {
       selectOrder.userName,
       selectOrder.userId
     );
-    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+    const downloadLinkAddr = file_.map((f) => ({
+      originalFileName: f.originalFileName,
+      downloadLink: f.downloadLink,
+      viewLink: f.viewLink,
+    }));
 
     console.log(downloadLinkAddr);
 
     const order_ = {
       ...selectOrder,
       photoCount: photoList.length,
-      firstWorkDownload: downloadLinkAddr,
+      preworkDownload: downloadLinkAddr,
       division: selectOrder.label === "샘플" ? "샘플완료" : "1차보정완료",
       step: selectOrder.label === "샘플" ? "샘플완료" : "1차보정완료",
     };
@@ -240,29 +250,39 @@ function PreWork() {
   }, [alignValue, dayValue]);
 
   const columns = [
-    {
-      title: "작업자 지정",
-      align: "center",
-      render: (_, record) => (
-        <Popover
-          content={
-            <div style={{ whiteSpace: "pre-line" }}>
-              {`${record.worker.admin_name}(${record.worker.worker_id})`}
-            </div>
-          }
-          title="작업자"
-        >
-          <Button
-            type={record.worker ? "primary" : "default"}
-            onClick={() => {
-              setSelectOrder(record);
-              showModal();
-            }}
-            icon={record.worker ? <BsCheck /> : <BsX />}
-          ></Button>
-        </Popover>
-      ),
-    },
+    // {
+    //   title: "작업자 지정",
+    //   align: "center",
+    //   render: (_, record) =>
+    //     record.worker ? (
+    //       <Popover
+    //         content={
+    //           <div style={{ whiteSpace: "pre-line" }}>
+    //             {`${record.worker?.admin_name}(${record.worker?.worker_id})`}
+    //           </div>
+    //         }
+    //         title="작업자"
+    //       >
+    //         <Button
+    //           type={record.worker ? "primary" : "default"}
+    //           onClick={() => {
+    //             setSelectOrder(record);
+    //             showModal();
+    //           }}
+    //           icon={record.worker ? <BsCheck /> : <BsX />}
+    //         ></Button>
+    //       </Popover>
+    //     ) : (
+    //       <Button
+    //         type={record.worker ? "primary" : "default"}
+    //         onClick={() => {
+    //           setSelectOrder(record);
+    //           showModal();
+    //         }}
+    //         icon={record.worker ? <BsCheck /> : <BsX />}
+    //       ></Button>
+    //     ),
+    // },
     {
       title: "업체",
       dataIndex: "company",
@@ -401,16 +421,16 @@ function PreWork() {
 
     console.log("선택된 작업자:", selectedWorker);
     // 여기서 원하는 동작 실행 (예: 서버 전송, state 업데이트 등)
-    console.log(selectOrder);
+    // console.log(selectOrder);
 
-    axios
-      .put(`${API_URL}/order/${selectOrder.id}`, { worker: selectedWorker })
-      .then((response) => {
-        console.log(response);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+    // axios
+    //   .put(`${API_URL}/order/${selectOrder.id}`, { worker: selectedWorker })
+    //   .then((response) => {
+    //     console.log(response);
+    //   })
+    //   .catch((error) => {
+    //     console.log(error);
+    //   });
 
     setIsModalOpen(false); // 모달 닫기
   };
@@ -421,6 +441,7 @@ function PreWork() {
 
   const [workers, setWorkers] = useState([]);
   const [selectedWorker, setSelectedWorker] = useState(null);
+  const [selectedOrders, setSelectedOrders] = useState();
 
   useEffect(() => {
     const getWorkers = async () => {
@@ -462,6 +483,27 @@ function PreWork() {
 
     getWorkers();
   }, []);
+
+  const handleWorker = async () => {
+    console.log(selectedOrders, selectedWorker);
+
+    await selectedOrders.map(async (order, index) => {
+      axios
+        .put(`${API_URL}/order/${order.id}`, {
+          worker: selectedWorker,
+          division: "작업중",
+        })
+        .then((response) => {
+          console.log(response);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    });
+
+    showMessage("success", "작업자를 할당했습니다.");
+    getOrders(alignValue, dayValue);
+  };
   return (
     <div style={{ margin: "0 auto", padding: "20px" }}>
       {contextHolder}
@@ -471,7 +513,7 @@ function PreWork() {
             value={alignValue}
             style={{ marginBottom: 8 }}
             onChange={setAlignValue}
-            options={["전체", "아워웨딩", "테일리티", "새로운거"]}
+            options={["전체", "아워웨딩", "테일리티", "원츠웨딩"]}
           />
           <Segmented
             value={dayValue}
@@ -510,7 +552,28 @@ function PreWork() {
       </Flex>
 
       <div style={{ marginTop: 24 }}>
-        <h3>주문 목록</h3>
+        <Space
+          style={{
+            width: "100%",
+            justifyContent: "space-between",
+            marginBottom: "10px",
+          }}
+        >
+          <h3>주문 목록</h3>
+          <Space>
+            <Button
+              type={selectedWorker ? "primary" : "default"}
+              onClick={() => {
+                showModal();
+              }}
+            >
+              {selectedWorker ? selectedWorker?.admin_name : "작업자 선택"}
+            </Button>
+            <Button disabled={!selectedOrders} onClick={handleWorker}>
+              할당하기
+            </Button>
+          </Space>
+        </Space>
         <Table
           columns={columns}
           dataSource={orders}
@@ -520,10 +583,20 @@ function PreWork() {
             record.grade === "S 샘플"
               ? "sample-row"
               : record.step === "재수정"
-              ? "revision-row " // 재수정
-              : "new-row "
+              ? "revision-row"
+              : "new-row"
           }
-          scroll={{ x: "max-content" }} // 👉 가로 스크롤
+          scroll={{ x: "max-content" }}
+          rowSelection={
+            selectedWorker
+              ? {
+                  onChange: (selectedRowKeys, selectedRows) => {
+                    console.log("선택된 주문:", selectedRows);
+                    setSelectedOrders(selectedRows);
+                  },
+                }
+              : undefined
+          }
         />
       </div>
 

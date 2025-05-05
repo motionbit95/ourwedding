@@ -209,11 +209,14 @@ const OrderForm = ({
           style={{ marginBottom: theme.spacing.lg }}
         >
           <Checkbox.Group
-            onChange={handleCheckboxChange}
-            value={formData.additionalOptions}
+            onChange={(values) => {
+              const lastValue = values[values.length - 1]; // 마지막 클릭된 값만 유지
+              handleSelectChange(lastValue);
+            }}
+            value={formData.grade ? [formData.grade] : []}
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr", // 항상 2열
+              gridTemplateColumns: "1fr 1fr",
             }}
           >
             {GRADES.map(([grade, time]) => (
@@ -234,7 +237,7 @@ const OrderForm = ({
                       fontFamily: "GumiRomanceTTF",
                     }}
                   >
-                    {`${time} (${grade})`}
+                    {`${grade} (${time})`}
                   </span>
                 </Checkbox>
               </div>

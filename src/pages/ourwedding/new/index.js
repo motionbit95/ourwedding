@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { ConfigProvider, Flex, Button, Spin, message } from "antd";
 import { BsCaretRightFill } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
@@ -178,6 +178,7 @@ function NewOrderPage() {
       const downloadLinkAddr = file.map((f) => ({
         originalFileName: f.originalFileName,
         downloadLink: f.downloadLink,
+        viewLink: f.viewLink,
       }));
 
       console.log(file, referenceFile);
@@ -191,6 +192,7 @@ function NewOrderPage() {
         },
         company: "아워웨딩",
         division: formData.grade === "S 샘플" ? "샘플" : "신규",
+        label: formData.grade === "S 샘플" ? "샘플" : "신규",
         step: "접수완료",
         comment,
         deadline,
@@ -299,6 +301,25 @@ function NewOrderPage() {
     }
   };
 
+  const formattedDate = useMemo(() => {
+    const now = new Date();
+    const datePart = now
+      .toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\. /g, "-")
+      .replace(/\./g, "");
+    const timePart = now.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    return `${datePart} ${timePart}`;
+  }, []);
+
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem("token");
@@ -324,7 +345,7 @@ function NewOrderPage() {
           ...prev,
           userName: userData.user_name || "",
           userId: userData.naver_id || "",
-          receivedDate: new Date().toLocaleString(),
+          receivedDate: formattedDate || "",
         }));
       } catch (error) {
         console.log("Token verification failed, redirecting to login");

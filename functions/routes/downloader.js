@@ -8,6 +8,8 @@ router.post("/download-zip", async (req, res) => {
   const { photoDownload = [], referenceDownload } = req.body;
   const zip = new JSZip();
 
+  console.log(photoDownload, referenceDownload);
+
   const fetchAndAddFile = async (url, name) => {
     try {
       const response = await axios.get(url, { responseType: "arraybuffer" });
@@ -19,7 +21,9 @@ router.post("/download-zip", async (req, res) => {
 
   // 📸 사진들 추가
   await Promise.all(
-    photoDownload.map((url, i) => fetchAndAddFile(url, `photo_${i + 1}.jpg`))
+    photoDownload.map(({ downloadLink }, i) =>
+      fetchAndAddFile(downloadLink, `photo_${i + 1}.jpg`)
+    )
   );
 
   // 🎯 참고 이미지 추가

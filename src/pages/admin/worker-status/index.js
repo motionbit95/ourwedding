@@ -1,11 +1,15 @@
 import {
   Button,
+  Checkbox,
   Col,
   Flex,
+  Image,
   message,
+  Modal,
   Segmented,
   Space,
   Table,
+  Tag,
   Upload,
 } from "antd";
 import axios from "axios";
@@ -28,6 +32,11 @@ const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+  skin: "피부",
+  body: "체형(+얼굴)",
+  filter: "필터",
+  background: "배경 보정",
+  retouch: "리터치",
 };
 
 function WorkerStatus() {
@@ -95,7 +104,11 @@ function WorkerStatus() {
       selectOrder.userName,
       selectOrder.userId
     );
-    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+    const downloadLinkAddr = file_.map((f) => ({
+      originalFileName: f.originalFileName,
+      downloadLink: f.downloadLink,
+      viewLink: f.viewLink,
+    }));
 
     console.log(downloadLinkAddr);
 
@@ -241,7 +254,7 @@ function WorkerStatus() {
         params: {
           company,
           day,
-          step: ["1차보정완료", "재수정완료", "샘플완료"],
+          step: ["1차보정완료", "재수정완료", "샘플완료", "작업중"],
         },
         paramsSerializer: (params) =>
           qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
@@ -267,6 +280,69 @@ function WorkerStatus() {
   useEffect(() => {
     getOrders(alignValue, dayValue);
   }, [alignValue, dayValue]);
+
+  const handleReservation = async (order) => {
+    const order_ = {
+      division: "전송예약",
+    };
+
+    console.log(order_, order.id);
+
+    try {
+      const { data } = await axios.put(
+        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+        order_,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (data.success) {
+        alert(`✅ 예약이 성공적으로 접수되었습니다.`);
+        getOrders(alignValue, dayValue);
+      } else {
+        alert("❌ 주문 저장 실패");
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("❌ 오류 발생:", error);
+      alert("🚨 서버 오류");
+      setLoading(false);
+    }
+  };
+
+  const handleSampleReservation = async (order, isWatermark) => {
+    const order_ = {
+      watermark: isWatermark,
+      division: "전송예약",
+    };
+
+    console.log(order_, order.id);
+
+    try {
+      const { data } = await axios.put(
+        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+        order_,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (data.success) {
+        alert(`✅ 예약이 성공적으로 접수되었습니다.`);
+        getOrders(alignValue, dayValue);
+      } else {
+        alert("❌ 주문 저장 실패");
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("❌ 오류 발생:", error);
+      alert("🚨 서버 오류");
+      setLoading(false);
+    }
+  };
 
   const columns = [
     {
@@ -346,7 +422,7 @@ function WorkerStatus() {
       title: "뷰탭",
       align: "center",
       className: "highlight-header",
-      render: (_, record) => <Button>뷰탭</Button>,
+      render: (_, record) => <ViewTabModal record={record} />,
     },
     {
       title: "1차보정본",
@@ -398,11 +474,15 @@ function WorkerStatus() {
       render: (_, record) =>
         record.label === "샘플" ? (
           <Flex vertical gap={"small"}>
-            <Button>워터마크 O</Button>
-            <Button>워터마크 X</Button>
+            <Button onClick={() => handleSampleReservation(record, true)}>
+              워터마크 O
+            </Button>
+            <Button onClick={() => handleSampleReservation(record, false)}>
+              워터마크 X
+            </Button>
           </Flex>
         ) : (
-          <Button>예약</Button>
+          <Button onClick={() => handleReservation(record)}>예약</Button>
         ),
     },
   ];
@@ -422,7 +502,7 @@ function WorkerStatus() {
             value={alignValue}
             style={{ marginBottom: 8 }}
             onChange={setAlignValue}
-            options={["전체", "아워웨딩", "테일리티", "새로운거"]}
+            options={["전체", "아워웨딩", "테일리티", "원츠웨딩"]}
           />
           <Segmented
             value={dayValue}
@@ -497,6 +577,203 @@ function WorkerStatus() {
         }
       `}</style>
     </div>
+  );
+}
+
+export function ViewTabModal({ record }) {
+  const [open, setOpen] = useState(false);
+  const [images, setImages] = useState([]);
+  const [selectedImg, setSelectedImg] = useState(null);
+
+  const [selectedImages, setSelectedImages] = useState([]);
+
+  /**
+   * arr1과 arr2를 파일 번호 기준으로 하나의 배열로 그룹화하여 반환합니다.
+   * 예: [ [{...1.jpg}, {...1-1.jpg}], [{...2.jpg}, {...2-1.jpg}] ]
+   */
+  function groupFilesByNumber(arr1, arr2) {
+    const extractBaseNumber = (filename) => {
+      const match = filename.match(/(\d+)(?:-\d+)?\.\w+$/);
+      return match ? match[1] : null;
+    };
+
+    const allFiles = [...arr1, ...arr2];
+
+    const grouped = {};
+
+    allFiles.forEach((file) => {
+      const base = extractBaseNumber(file.originalFileName);
+      if (!base) return;
+
+      if (!grouped[base]) {
+        grouped[base] = [];
+      }
+
+      grouped[base].push(file);
+    });
+
+    return Object.values(grouped);
+  }
+
+  const toggleImageSelection = (img) => {
+    setSelectedImages((prev) => {
+      const exists = prev.find((i) => i.downloadLink === img.downloadLink);
+      return exists
+        ? prev.filter((i) => i.downloadLink !== img.downloadLink)
+        : [...prev, img];
+    });
+  };
+
+  const handleOpen = () => {
+    const grouped =
+      record.label === "신규"
+        ? groupFilesByNumber(record.photoDownload, record.preworkDownload)
+        : groupFilesByNumber(record.photoDownload, record.firstWorkDownload);
+    const flat = grouped.flat(); // 2차원 → 1차원 배열로
+    setSelectedImg(flat[0]); // 첫 이미지 기본 선택
+    setImages(flat);
+    setOpen(true);
+  };
+
+  const getFileIdFromLink = (link) => {
+    const match = link.match(/id=([^&]+)/);
+    return match ? match[1] : null;
+  };
+
+  const [loading, setLoading] = useState(false);
+  const handleDownloadZip = async (photoDownload) => {
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/download-zip`,
+        {
+          photoDownload,
+        },
+        { responseType: "blob" }
+      );
+
+      const blob = new Blob([response.data], { type: "application/zip" });
+      const filename = `${record.userName}_${record.orderNumber}_선택사진.zip`;
+      saveAs(blob, filename);
+      setLoading(false);
+    } catch (error) {
+      console.error("ZIP 다운로드 실패:", error);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      <Button onClick={handleOpen}>뷰탭</Button>
+
+      <Modal
+        open={open}
+        onCancel={() => setOpen(false)}
+        footer={
+          <Space>
+            <Button>닫기</Button>
+            <Button
+              type="primary"
+              loading={loading}
+              onClick={() => handleDownloadZip(selectedImages)}
+            >
+              선택한 사진 다운로드
+            </Button>
+          </Space>
+        }
+        width="100%"
+      >
+        <Flex style={{ height: "80vh" }}>
+          {/* 왼쪽 큰 이미지 */}
+          <div
+            style={{
+              flex: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {selectedImg && (
+              <iframe
+                src={`https://drive.google.com/file/d/${getFileIdFromLink(
+                  selectedImg.downloadLink
+                )}/preview`}
+                width="100%"
+                height="100%"
+                style={{
+                  border: "1px solid #ccc",
+                  marginBottom: 8,
+                  cursor: "pointer",
+                }}
+              />
+            )}
+          </div>
+
+          {/* 오른쪽 썸네일 목록 */}
+          <Flex vertical>
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "10px",
+                background: "#f5f5f5",
+                borderLeft: "1px solid #ccc",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr", // 2열
+                gap: "10px",
+                gridAutoRows: "240px", // 고정 높이 설정
+              }}
+            >
+              {images.map((img, idx) => {
+                const isChecked = selectedImages.some(
+                  (i) => i.downloadLink === img.downloadLink
+                );
+                return (
+                  <Space
+                    style={{ alignItems: "flex-start", position: "relative" }}
+                  >
+                    <Tag
+                      style={{
+                        position: "absolute",
+                        zIndex: 99,
+                        right: 0,
+                        top: 8,
+                      }}
+                    >
+                      {idx % 2 === 0 ? "원본" : "보정본"}
+                    </Tag>
+                    <Checkbox
+                      checked={isChecked}
+                      onChange={() => toggleImageSelection(img)}
+                    />
+                    <Image
+                      key={idx}
+                      src={`https://drive.google.com/thumbnail?id=${getFileIdFromLink(
+                        img.downloadLink
+                      )}`}
+                      alt={img.originalFileName}
+                      style={{
+                        width: "100%",
+                        height: "240px",
+                        border:
+                          selectedImg?.downloadLink === img.downloadLink
+                            ? "2px solid #1890ff"
+                            : "1px solid #ccc",
+                        cursor: "pointer",
+                        objectFit: "cover", // 이미지 비율 유지하며 채움
+                        objectPosition: "center", // 중앙 기준으로 자름
+                      }}
+                      onClick={() => setSelectedImg(img)}
+                      preview={false}
+                    />
+                  </Space>
+                );
+              })}
+            </div>
+          </Flex>
+        </Flex>
+      </Modal>
+    </>
   );
 }
 

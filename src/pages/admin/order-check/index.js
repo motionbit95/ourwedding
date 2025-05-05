@@ -9,6 +9,11 @@ const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+  skin: "피부",
+  body: "체형(+얼굴)",
+  filter: "필터",
+  background: "배경 보정",
+  retouch: "리터치",
 };
 
 function OrderPage() {
@@ -22,9 +27,13 @@ function OrderPage() {
     try {
       axios
         .put(`${API_URL}/order/${data.id}`, {
-          step: "주문확인완료",
+          division: "주문접수완료",
         })
-        .then((response) => console.log(response))
+        .then((response) => {
+          console.log(response);
+          alert("주문이 확인되었습니다.");
+          getOrders(alignValue, dayValue);
+        })
         .catch((error) => {
           console.log(error);
         });
@@ -137,7 +146,7 @@ function OrderPage() {
             value={alignValue}
             style={{ marginBottom: 8 }}
             onChange={setAlignValue}
-            options={["전체", "아워웨딩", "테일리티", "새로운거"]}
+            options={["전체", "아워웨딩", "테일리티", "원츠웨딩"]}
           />
           <Segmented
             value={dayValue}

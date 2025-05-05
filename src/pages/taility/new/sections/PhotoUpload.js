@@ -103,7 +103,9 @@ const PhotoUpload = ({
             <Upload
               accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
               multiple
-              onChange={handlePhotoUpload}
+              onChange={() => {
+                handleSelectChange();
+              }}
               fileList={photoList}
               showUploadList={false}
               customRequest={customUpload}

@@ -29,6 +29,11 @@ const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+  skin: "피부",
+  body: "체형(+얼굴)",
+  filter: "필터",
+  background: "배경 보정",
+  retouch: "리터치",
 };
 
 function NewOrder() {
@@ -149,7 +154,11 @@ function NewOrder() {
       selectOrder.userName,
       selectOrder.userId
     );
-    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+    const downloadLinkAddr = file_.map((f) => ({
+      originalFileName: f.originalFileName,
+      downloadLink: f.downloadLink,
+      viewLink: f.viewLink,
+    }));
 
     console.log(downloadLinkAddr);
 
@@ -160,7 +169,7 @@ function NewOrder() {
       ...selectOrder,
       photoCount: photoList.length,
       firstWorkDownload: downloadLinkAddr,
-      division: "선작업",
+      division: selectOrder.label === "샘플" ? "샘플완료" : "선작업",
       step:
         selectOrder.label === "샘플"
           ? "작업 진행중"
@@ -235,7 +244,7 @@ function NewOrder() {
   const getOrders = async (company, day) => {
     try {
       const response = await axios.get(`${API_URL}/order/filter`, {
-        params: { company, day, step: ["신규", "샘플"] },
+        params: { company, day, step: ["주문접수완료"] },
         paramsSerializer: (params) =>
           qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
       });
@@ -406,7 +415,7 @@ function NewOrder() {
             value={alignValue}
             style={{ marginBottom: 8 }}
             onChange={setAlignValue}
-            options={["전체", "아워웨딩", "테일리티", "새로운거"]}
+            options={["전체", "아워웨딩", "테일리티", "원츠웨딩"]}
           />
           <Segmented
             value={dayValue}

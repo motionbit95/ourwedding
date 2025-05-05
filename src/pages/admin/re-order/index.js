@@ -29,6 +29,11 @@ const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+  skin: "피부",
+  body: "체형(+얼굴)",
+  filter: "필터",
+  background: "배경 보정",
+  retouch: "리터치",
 };
 
 function ReOrder() {
@@ -64,7 +69,11 @@ function ReOrder() {
       console.log("order :", order);
 
       const file_ = await uploadFiles(fileList, order.userName, order.userId);
-      const downloadLinkAddr = file_.map((f) => f.downloadLink);
+      const downloadLinkAddr = file_.map((f) => ({
+        originalFileName: f.originalFileName,
+        downloadLink: f.downloadLink,
+        viewLink: f.viewLink,
+      }));
 
       console.log(downloadLinkAddr);
 
@@ -510,7 +519,7 @@ function ReOrder() {
             value={alignValue}
             style={{ marginBottom: 8 }}
             onChange={setAlignValue}
-            options={["전체", "아워웨딩", "테일리티", "새로운거"]}
+            options={["전체", "아워웨딩", "테일리티", "원츠웨딩"]}
           />
           <Segmented
             value={dayValue}

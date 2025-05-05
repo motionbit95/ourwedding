@@ -88,7 +88,7 @@ const CautionSection = ({
         >
           <Typography
             style={{
-              zIndex: 99,
+              zIndex: 9,
               paddingInline: "20px",
               display: "inline",
               fontFamily: "Castoro Titling",

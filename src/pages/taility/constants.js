@@ -1,11 +1,10 @@
 import { theme } from "../ourwedding/utils/theme";
 
 export const GRADES = [
-  ["S 샘플", "24시간"],
-  ["A+", "3일"],
-  ["A", "5일"],
-  ["B", "7일"],
-  ["C", "10일"],
+  ["샘플", "4일"],
+  ["~4일까지", "4일"],
+  ["~48시간안에", "48시간"],
+  ["당일 6시간 안에(3장이상부터)", "6시간"],
 ];
 
 export const ADDITIONAL_OPTIONS = [

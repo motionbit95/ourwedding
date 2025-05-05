@@ -5,13 +5,7 @@ import { customUpload } from "../../utils/uploadUtils";
 import { theme } from "../../utils/theme";
 import { COLORS } from "../../style_vars";
 
-const PhotoUpload = ({
-  photoList,
-  handlePhotoUpload,
-  handleReferenceUpload,
-  showMessage,
-  paddingBox,
-}) => {
+const PhotoUpload = ({ photoList, onChange, showMessage, paddingBox }) => {
   return (
     <Flex
       style={{
@@ -90,9 +84,9 @@ const PhotoUpload = ({
             <Upload
               accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
               multiple
-              onChange={handlePhotoUpload}
+              onChange={onChange}
               fileList={photoList}
-              showUploadList={false}
+              showUploadList={true}
               customRequest={customUpload}
               beforeUpload={(file) => {
                 const isValidType = [
@@ -126,7 +120,7 @@ const PhotoUpload = ({
                 }}
               >
                 <Button
-                  htmlType="submit"
+                  // htmlType="submit"
                   icon={<FiFilePlus />}
                   iconPosition="start"
                   type="text"
@@ -153,7 +147,7 @@ const PhotoUpload = ({
               size={"large"}
               style={{
                 justifyContent: "flex-end",
-                marginBottom: "24px",
+                marginBlock: "24px",
               }}
             >
               <Typography.Text

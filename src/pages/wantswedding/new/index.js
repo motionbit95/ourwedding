@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { ConfigProvider, Flex, Button, Spin, message } from "antd";
 import { BsCaretRightFill } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
@@ -86,6 +86,7 @@ function WantsNewOrderPage() {
 
   const handlePhotoUpload = useCallback(
     ({ file, fileList }) => {
+      console.log(file, fileList);
       if (file.status === "done") {
         showMessage(
           "success",
@@ -166,31 +167,33 @@ function WantsNewOrderPage() {
         }
       );
 
-      const referenceFile = await uploadReferenceFiles(
-        referenceFileList,
-        formData.userName,
-        formData.userId
-      );
+      // const referenceFile = await uploadReferenceFiles(
+      //   referenceFileList,
+      //   formData.userName,
+      //   formData.userId
+      // );
 
       setUploadProgress(80);
+
+      console.log(file);
 
       // 수정: originalFileName downloadLink를 포함한 객체 배열
       const downloadLinkAddr = file.map((f) => ({
         originalFileName: f.originalFileName,
         downloadLink: f.downloadLink,
+        viewLink: f.viewLink,
       }));
-
-      console.log(file, referenceFile);
 
       const order = {
         ...formData,
         photoDownload: downloadLinkAddr,
-        referenceDownload: {
-          originalFileName: referenceFile?.originalFileName,
-          downloadLink: referenceFile?.downloadLink,
-        },
+        // referenceDownload: {
+        //   originalFileName: referenceFile?.originalFileName,
+        //   downloadLink: referenceFile?.downloadLink,
+        // },
         company: "원츠웨딩",
         division: formData.grade === "S 샘플" ? "샘플" : "신규",
+        label: formData.grade === "S 샘플" ? "샘플" : "신규",
         step: "접수완료",
         comment,
         deadline,
@@ -299,6 +302,25 @@ function WantsNewOrderPage() {
     }
   };
 
+  const formattedDate = useMemo(() => {
+    const now = new Date();
+    const datePart = now
+      .toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\. /g, "-")
+      .replace(/\./g, "");
+    const timePart = now.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    return `${datePart} ${timePart}`;
+  }, []);
+
   useEffect(() => {
     const verifyToken = async () => {
       const token = localStorage.getItem("token");
@@ -324,7 +346,7 @@ function WantsNewOrderPage() {
           ...prev,
           userName: userData.user_name || "",
           userId: userData.naver_id || "",
-          receivedDate: new Date().toLocaleString(),
+          receivedDate: formattedDate || "",
         }));
       } catch (error) {
         console.log("Token verification failed, redirecting to login");
@@ -467,7 +489,7 @@ function WantsNewOrderPage() {
           >
             <PhotoUpload
               title="사진 업로드"
-              fileList={photoList}
+              photoList={photoList}
               onChange={handlePhotoUpload}
               accept=".raw,.jpeg,.jpg,.cr2,.cr3,.heic"
               maxCount={formData.photoCount}

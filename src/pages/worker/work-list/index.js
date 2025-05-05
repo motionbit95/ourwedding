@@ -19,6 +19,11 @@ const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+  skin: "피부",
+  body: "체형(+얼굴)",
+  filter: "필터",
+  background: "배경 보정",
+  retouch: "리터치",
 };
 
 function WorkList() {
@@ -86,7 +91,11 @@ function WorkList() {
       selectOrder.userName,
       selectOrder.userId
     );
-    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+    const downloadLinkAddr = file_.map((f) => ({
+      originalFileName: f.originalFileName,
+      downloadLink: f.downloadLink,
+      viewLink: f.viewLink,
+    }));
 
     console.log(downloadLinkAddr);
 

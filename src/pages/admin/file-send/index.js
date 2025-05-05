@@ -24,6 +24,7 @@ import {
 import { storage } from "../../../firebaseConfig";
 
 import dayjs from "dayjs";
+import { ViewTabModal } from "../worker-status";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -31,6 +32,11 @@ const ADDITIONAL_OPTION_MAP = {
   film: "필름",
   person: "인원추가",
   edit: "합성",
+  skin: "피부",
+  body: "체형(+얼굴)",
+  filter: "필터",
+  background: "배경 보정",
+  retouch: "리터치",
 };
 
 const GRADE_WORK_DAYS = {
@@ -105,7 +111,12 @@ function FileSend() {
       selectOrder.userName,
       selectOrder.userId
     );
-    const downloadLinkAddr = file_.map((f) => f.downloadLink);
+
+    const downloadLinkAddr = file_.map((f) => ({
+      originalFileName: f.originalFileName,
+      downloadLink: f.downloadLink,
+      viewLink: f.viewLink,
+    }));
 
     console.log(downloadLinkAddr);
 
@@ -249,8 +260,7 @@ function FileSend() {
       const response = await axios.get(`${API_URL}/order/filter`, {
         params: {
           company,
-          day,
-          step: ["1차보정완료", "재수정완료", "샘플완료"],
+          step: ["전송예약", "전송완료"],
         },
         paramsSerializer: (params) =>
           qs.stringify(params, { arrayFormat: "repeat" }), // ✅ 핵심
@@ -266,8 +276,16 @@ function FileSend() {
             ...order,
           }));
 
-      console.log(orderList);
-      setOrders(orderList);
+      console.log(day, orderList);
+      setOrders(
+        orderList.filter(({ division }) =>
+          day === "전송 O"
+            ? division === "전송완료"
+            : day === "전송 X"
+            ? division !== "전송완료"
+            : true
+        )
+      );
     } catch (error) {
       console.error("주문 불러오기 실패:", error);
     }
@@ -277,6 +295,69 @@ function FileSend() {
     getOrders(alignValue, dayValue);
   }, [alignValue, dayValue]);
 
+  const handleSend = async (order) => {
+    const order_ = {
+      division: "전송완료",
+    };
+
+    console.log(order_, order.id);
+
+    try {
+      const { data } = await axios.put(
+        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+        order_,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (data.success) {
+        alert(`✅ 전송에 성공 했습니다.`);
+        getOrders(alignValue, dayValue);
+      } else {
+        alert("❌ 주문 저장 실패");
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("❌ 오류 발생:", error);
+      alert("🚨 서버 오류");
+      setLoading(false);
+    }
+  };
+
+  const handleSampleReservation = async (order, isWatermark) => {
+    const order_ = {
+      watermark: isWatermark,
+      division: "전송예약",
+    };
+
+    console.log(order_, order.id);
+
+    try {
+      const { data } = await axios.put(
+        `${API_URL}/order/${order.id}`, // ✅ 여기에 실제 API 엔드포인트 입력
+        order_,
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (data.success) {
+        alert(`✅ 예약이 성공적으로 접수되었습니다.`);
+        getOrders(alignValue, dayValue);
+      } else {
+        alert("❌ 주문 저장 실패");
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("❌ 오류 발생:", error);
+      alert("🚨 서버 오류");
+      setLoading(false);
+    }
+  };
+
   const columns = [
     {
       title: "전송여부",
@@ -284,7 +365,7 @@ function FileSend() {
       key: "send",
       align: "center",
       render: (_, record) => {
-        return record.send ? "O" : "X";
+        return record.division === "전송완료" ? "O" : "X";
       },
     },
     {
@@ -394,14 +475,14 @@ function FileSend() {
     {
       title: "뷰탭",
       align: "center",
-      render: (_, record) => <Button>뷰탭</Button>,
+      render: (_, record) => <ViewTabModal record={record} />,
     },
     {
       title: "1차보정본",
       align: "center",
       render: (_, record) => (
         <>
-          {record.division === "1차보정완료" && (
+          {record.preworkDownload && (
             <Flex vertical gap={"small"}>
               <Button
                 onClick={() => handleDownloadZipFirstWork(record)}
@@ -528,11 +609,14 @@ function FileSend() {
           }}
         >
           <>
-            {record.division === "샘플완료" && (
+            {record.label === "샘플" && (
               <Flex vertical gap={"small"}>
-                <Button>워터마크 O</Button>
-
-                <Button>워터마크 X</Button>
+                <Button onClick={() => handleSampleReservation(record, true)}>
+                  워터마크 O
+                </Button>
+                <Button onClick={() => handleSampleReservation(record, false)}>
+                  워터마크 X
+                </Button>
               </Flex>
             )}
           </>
@@ -542,7 +626,9 @@ function FileSend() {
     {
       title: "바로전송",
       align: "center",
-      render: (_, record) => <Button>전송</Button>,
+      render: (_, record) => (
+        <Button onClick={() => handleSend(record)}>전송</Button>
+      ),
     },
   ];
 
@@ -555,12 +641,12 @@ function FileSend() {
             value={alignValue}
             style={{ marginBottom: 8 }}
             onChange={setAlignValue}
-            options={["전체", "아워웨딩", "테일리티", "새로운거"]}
+            options={["전체", "아워웨딩", "테일리티", "원츠웨딩"]}
           />
           <Segmented
             value={dayValue}
             style={{ marginBottom: 8 }}
-            // onChange={setDayValue}
+            onChange={setDayValue}
             options={["전체", "전송 O", "전송 X"]}
           />
         </Space>

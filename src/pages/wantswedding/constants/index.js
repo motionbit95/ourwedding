@@ -1,6 +1,6 @@
 export const GRADES = [
-  ["기본", "~4일"],
-  ["추가금 : 1500원", "~48시간"],
+  ["~4일", "기본"],
+  ["~48시간", "추가금 : 1500원"],
 ];
 
 export const ADDITIONAL_OPTIONS = [

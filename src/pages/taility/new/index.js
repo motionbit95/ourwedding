@@ -25,6 +25,7 @@ import {
   deleteObject,
 } from "firebase/storage";
 import dayjs from "dayjs";
+import { theme } from "../utils/theme";
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -180,20 +181,37 @@ const NewOrderPage = () => {
     return "알 수 없음";
   };
 
+  const [uploadProgress, setUploadProgress] = useState(0);
+
   const handleFormUpload = async () => {
     setLoading(true);
+    setUploadProgress(0);
     try {
       const file = await uploadFiles(
         photoList,
         formData.userName,
-        formData.userId
+        formData.userId,
+        (progress) => {
+          setUploadProgress(progress);
+        }
       );
+
       const referenceFile = await uploadReferenceFiles(
         referenceFileList,
         formData.userName,
         formData.userId
       );
-      const downloadLinkAddr = file.map((f) => f.downloadLink);
+
+      setUploadProgress(80);
+
+      const downloadLinkAddr = file.map((f) => ({
+        originalFileName: f.originalFileName,
+        downloadLink: f.downloadLink,
+        viewLink: f.viewLink,
+      }));
+
+      console.log(downloadLinkAddr);
+
       const duration = getDurationByGrade(formData.grade);
       const deadline = getDeadline(duration);
 
@@ -208,11 +226,14 @@ const NewOrderPage = () => {
         label: formData.grade === "S 샘플" ? "샘플" : "신규",
       };
 
+      setUploadProgress(90);
+
       const { data } = await axios.post(`${API_URL}/order`, order, {
         headers: { "Content-Type": "application/json" },
       });
 
       if (data.success) {
+        setUploadProgress(100);
         alert(`✅ 주문이 성공적으로 저장되었습니다! 주문 ID: ${data.orderId}`);
       } else {
         alert("❌ 주문 저장 실패");
@@ -225,8 +246,11 @@ const NewOrderPage = () => {
     }
   };
 
-  const uploadFiles = async (fileList, userName, userId) => {
+  const uploadFiles = async (fileList, userName, userId, onProgress) => {
     try {
+      const total = fileList.length; // 참고 사진 포함
+      let completed = 0;
+
       const uploadPromises = fileList.map(async (file, index) => {
         const fileObj = file.originFileObj;
         const fileExtension = fileObj.name.substring(
@@ -244,6 +268,9 @@ const NewOrderPage = () => {
           fileUrl: downloadURL,
           originalFileName: encodedFileName,
         });
+
+        completed++;
+        onProgress(Math.round((completed / total) * 70));
 
         await deleteObject(storageRef);
         return res.data;
@@ -362,7 +389,27 @@ const NewOrderPage = () => {
           justifyContent: "center",
         }}
       >
-        <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} />
+        <Flex
+          vertical
+          gap={"large"}
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "white",
+            borderRadius: 10,
+            padding: "5vh",
+          }}
+        >
+          <Spin size="large" percent={uploadProgress} />
+          <strong
+            style={{
+              color: "#888",
+              fontSize: theme.typography.fontSize.md,
+              whiteSpace: "pre-line",
+              textAlign: "center",
+            }}
+          >{`업로드 중입니다\n잠시만 기다려주세요.`}</strong>
+        </Flex>
       </div>
 
       <Flex vertical>

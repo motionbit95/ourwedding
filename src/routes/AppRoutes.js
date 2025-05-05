@@ -169,7 +169,7 @@ const AppRoutes = () => {
         path={ADMIN.DASHBOARD}
         element={
           <ProtectedRoute
-            isAuthenticated={adminAuth.isAuthenticated}
+            isAuthenticated={!!localStorage.getItem("admin-token")}
             userType="admin"
           >
             <Dashboard />

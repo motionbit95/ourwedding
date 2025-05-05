@@ -179,6 +179,7 @@ function WantsRevisionForm() {
       const downloadLinkAddr = file.map((f) => ({
         originalFileName: f.originalFileName,
         downloadLink: f.downloadLink,
+        viewLink: f.viewLink,
       }));
 
       console.log(file, referenceFile);
@@ -191,7 +192,8 @@ function WantsRevisionForm() {
           downloadLink: referenceFile?.downloadLink,
         },
         company: "원츠웨딩",
-        division: formData.grade === "S 샘플" ? "샘플" : "신규",
+        division: "재수정",
+        label: "재수정",
         step: "접수완료",
         comment,
         deadline,

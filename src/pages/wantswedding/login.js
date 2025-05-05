@@ -245,6 +245,7 @@ function WantsLogin() {
                   backgroundColor: "transparent",
                   border: "none",
                   boxShadow: "none",
+                  zIndex: 99,
                 }}
               >
                 사진 업로드

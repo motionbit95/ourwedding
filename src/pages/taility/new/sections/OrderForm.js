@@ -188,7 +188,7 @@ const OrderForm = ({
             >
               {GRADES.map(([grade, time]) => (
                 <Select.Option key={grade} value={grade}>
-                  {`${grade} (${time})`}
+                  {`${grade}`}
                 </Select.Option>
               ))}
             </Select>
