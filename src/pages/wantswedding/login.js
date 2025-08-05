@@ -143,6 +143,7 @@ function WantsLogin() {
           variant="filled"
           labelCol={{ span: 8 }}
           wrapperCol={{ span: 16 }}
+          style={{ zIndex: 99 }}
         >
           <Flex
             vertical

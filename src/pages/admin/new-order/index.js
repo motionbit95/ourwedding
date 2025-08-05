@@ -479,16 +479,16 @@ function NewOrder() {
         </Upload>
       ),
     },
-    {
-      title: "수정",
-      key: "action",
-      align: "center",
-      render: (_, record) => (
-        <Button size="small" onClick={() => handleEditClick(record)}>
-          수정
-        </Button>
-      ),
-    },
+    // {
+    //   title: "수정",
+    //   key: "action",
+    //   align: "center",
+    //   render: (_, record) => (
+    //     <Button size="small" onClick={() => handleEditClick(record)}>
+    //       수정
+    //     </Button>
+    //   ),
+    // },
   ];
 
   return (

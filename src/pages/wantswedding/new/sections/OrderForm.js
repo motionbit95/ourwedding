@@ -310,11 +310,11 @@ const OrderForm = ({
             </div>
           }
           colon={false}
-          help={
-            <div style={{ color: "#FF7B00DD" }}>
-              {"ㄴ * 5+1 서비스 장수 포함하여 기재 바랍니다. *"}
-            </div>
-          }
+          // help={
+          //   <div style={{ color: "#FF7B00DD" }}>
+          //     {"ㄴ * 5+1 서비스 장수 포함하여 기재 바랍니다. *"}
+          //   </div>
+          // }
           style={{ marginBottom: theme.spacing.lg }}
         >
           <Input

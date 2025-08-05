@@ -122,10 +122,10 @@ function RevisionRequest() {
   }, []);
 
   function convertKoreanDateTime(input) {
-    const [dateStr, ampm, timeStr] = input
-      .replace("오전", "AM")
-      .replace("오후", "PM")
-      .split(/ (AM|PM) /);
+    const [dateStr, ampm, timeStr] = input;
+    // .replace("오전", "AM")
+    // .replace("오후", "PM")
+    // .split(/ (AM|PM) /);
 
     const [year, month, day] = dateStr
       .match(/\d+/g)
@@ -320,7 +320,11 @@ function RevisionRequest() {
         {orders.map((order, index) => (
           <Flex
             vertical={screens.lg ? false : true}
-            style={{ width: "100%", justifyContent: "space-between" }}
+            style={{
+              width: "100%",
+              justifyContent: "space-between",
+              flexDirection: index % 2 === 0 ? "column" : "column-reverse",
+            }}
           >
             <Flex vertical style={{ alignItems: "center", width: "100%" }}>
               <div

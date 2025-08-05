@@ -454,7 +454,11 @@ function WorkerStatus() {
             }}
           >
             <Button
-              type={record.firstWorkDownload.length > 1 ? "primary" : "default"}
+              type={
+                record.preworkDownload && record.preworkDownload.length > 0
+                  ? "primary"
+                  : "default"
+              }
               loading={
                 record?.id === selectOrder?.id &&
                 isLoading?.isLoading &&
@@ -627,8 +631,14 @@ export function ViewTabModal({ record }) {
   const handleOpen = () => {
     const grouped =
       record.label === "신규"
-        ? groupFilesByNumber(record.photoDownload, record.preworkDownload)
-        : groupFilesByNumber(record.photoDownload, record.firstWorkDownload);
+        ? groupFilesByNumber(
+            record.photoDownload,
+            record.preworkDownload ? record.preworkDownload : []
+          )
+        : groupFilesByNumber(
+            record.photoDownload,
+            record.firstWorkDownload ? record.preworkDownload : []
+          );
     const flat = grouped.flat(); // 2차원 → 1차원 배열로
     setSelectedImg(flat[0]); // 첫 이미지 기본 선택
     setImages(flat);
@@ -718,10 +728,10 @@ export function ViewTabModal({ record }) {
                 padding: "10px",
                 background: "#f5f5f5",
                 borderLeft: "1px solid #ccc",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr", // 2열
+                // display: "grid",
+                // gridTemplateColumns: "1fr 1fr", // 2열
                 gap: "10px",
-                gridAutoRows: "240px", // 고정 높이 설정
+                gridAutoRows: "120px", // 고정 높이 설정
               }}
             >
               {images.map((img, idx) => {
@@ -732,7 +742,7 @@ export function ViewTabModal({ record }) {
                   <Space
                     style={{ alignItems: "flex-start", position: "relative" }}
                   >
-                    <Tag
+                    {/* <Tag
                       style={{
                         position: "absolute",
                         zIndex: 99,
@@ -741,7 +751,7 @@ export function ViewTabModal({ record }) {
                       }}
                     >
                       {idx % 2 === 0 ? "원본" : "보정본"}
-                    </Tag>
+                    </Tag> */}
                     <Checkbox
                       checked={isChecked}
                       onChange={() => toggleImageSelection(img)}
@@ -754,7 +764,7 @@ export function ViewTabModal({ record }) {
                       alt={img.originalFileName}
                       style={{
                         width: "100%",
-                        height: "240px",
+                        height: "120px",
                         border:
                           selectedImg?.downloadLink === img.downloadLink
                             ? "2px solid #1890ff"
